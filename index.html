@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Controle de Validade Test</title>
+<title>Controle de Validade</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 <style>
@@ -25,756 +25,195 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
-  body {
-    font-family: 'DM Mono', monospace;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+  .header { background: linear-gradient(135deg, var(--surface) 0%, #0d1520 100%); border-bottom: 1px solid var(--border); padding: 16px 20px 12px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 12px; }
+  .header-icon { width:38px;height:38px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0; }
+  .header h1 { font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text);letter-spacing:-0.3px; }
+  .header p { font-size:11px;color:var(--muted);margin-top:1px; }
+  .header-right { margin-left:auto;display:flex;align-items:center;gap:8px; }
+  .backup-dot { display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);padding:4px 8px;background:rgba(0,229,160,0.08);border-radius:6px; }
+  .backup-dot.ok { color:var(--accent); }
+  .header-count { background:var(--accent);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;padding:4px 10px;border-radius:20px; }
 
-  /* HEADER */
-  .header {
-    background: linear-gradient(135deg, var(--surface) 0%, #0d1520 100%);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .header-icon {
-    width: 38px; height: 38px;
-    background: var(--accent);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-  }
-  .header h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--text);
-    letter-spacing: -0.3px;
-  }
-  .header p {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 1px;
-  }
-  .header-count {
-    margin-left: auto;
-    background: var(--accent);
-    color: #000;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    padding: 4px 10px;
-    border-radius: 20px;
-  }
-  .backup-indicator {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    color: var(--muted);
-    padding: 4px 8px;
-    background: rgba(0,229,160,0.1);
-    border-radius: 6px;
-  }
-  .backup-indicator.syncing { color: var(--accent2); }
-  .backup-indicator.synced { color: var(--accent); }
+  .tabs { display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 8px;gap:2px;overflow-x:auto;scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { padding:12px 13px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s;background:none;border-top:none;border-left:none;border-right:none; }
+  .tab.active { color:var(--accent);border-bottom-color:var(--accent); }
 
-  /* TABS */
-  .tabs {
-    display: flex;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 16px;
-    gap: 4px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab {
-    padding: 12px 16px;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    white-space: nowrap;
-    transition: all 0.2s;
-    background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-  }
-  .tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
+  .section { display:none;padding:16px; }
+  .section.active { display:block; }
 
-  /* SECTIONS */
-  .section { display: none; padding: 16px; }
-  .section.active { display: block; }
+  .form-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px; }
+  .form-card h3 { font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px; }
+  .form-card h3::before { content:'';width:3px;height:14px;background:var(--accent);border-radius:2px; }
 
-  /* FORM */
-  .form-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .form-card h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .form-card h3::before {
-    content: '';
-    width: 3px; height: 14px;
-    background: var(--accent);
-    border-radius: 2px;
-  }
+  .field { margin-bottom:12px; }
+  .field label { display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px; }
+  .field input, .field select { width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 14px;font-family:'DM Mono',monospace;font-size:15px;outline:none;transition:border-color 0.2s;-webkit-appearance:none; }
+  .field input:focus { border-color:var(--accent); }
+  .field input::placeholder { color:var(--muted);font-size:13px; }
 
-  .field { margin-bottom: 12px; }
-  .field label {
-    display: block;
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .field input, .field select {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--radius-sm);
-    padding: 11px 14px;
-    font-family: 'DM Mono', monospace;
-    font-size: 15px;
-    outline: none;
-    transition: border-color 0.2s;
-    -webkit-appearance: none;
-  }
-  .field input:focus, .field select:focus {
-    border-color: var(--accent);
-  }
-  .field input::placeholder { color: var(--muted); font-size: 13px; }
+  .row2 { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+  .row3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px; }
 
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .barcode-row { display:flex;gap:8px;align-items:flex-end; }
+  .barcode-row .field { flex:1;margin-bottom:0; }
+  .scan-btn { height:44px;padding:0 14px;background:var(--accent2);border:none;border-radius:var(--radius-sm);color:#fff;font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:opacity 0.2s; }
+  .scan-btn:active { opacity:0.8; }
 
-  /* BARCODE AREA */
-  .barcode-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-  }
-  .barcode-row .field { flex: 1; margin-bottom: 0; }
-  .scan-btn {
-    height: 44px;
-    padding: 0 14px;
-    background: var(--accent2);
-    border: none;
-    border-radius: var(--radius-sm);
-    color: #fff;
-    font-size: 20px;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: opacity 0.2s;
-  }
-  .scan-btn:active { opacity: 0.8; }
+  .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;flex-direction:column;align-items:center;justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .camera-wrap { position:relative;width:100%;max-width:420px; }
+  #video { width:100%;border-radius:12px;display:block;background:#000; }
+  .scan-frame { position:absolute;inset:20%;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5); }
+  .scan-line { position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);opacity:0.8;animation:scanMove 2s linear infinite; }
+  @keyframes scanMove { 0%{top:0}50%{top:calc(100% - 2px)}100%{top:0} }
+  .scan-hint { color:var(--text);font-family:'Syne',sans-serif;font-size:14px;text-align:center;margin-top:20px;padding:0 20px; }
+  .scan-hint small { color:var(--muted);font-size:12px;display:block;margin-top:4px; }
+  .modal-actions { display:flex;gap:12px;margin-top:20px;padding:0 20px; }
+  .modal-btn { flex:1;padding:14px;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none; }
+  .modal-btn.cancel { background:var(--surface2);color:var(--text); }
+  .modal-btn.confirm { background:var(--accent);color:#000; }
 
-  /* CAMERA MODAL */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.92);
-    z-index: 1000;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .camera-wrap {
-    position: relative;
-    width: 100%;
-    max-width: 420px;
-  }
-  #video {
-    width: 100%;
-    border-radius: 12px;
-    display: block;
-    background: #000;
-  }
-  .scan-frame {
-    position: absolute;
-    inset: 20%;
-    border: 2px solid var(--accent);
-    border-radius: 8px;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
-  }
-  .scan-line {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--accent);
-    opacity: 0.8;
-    animation: scanMove 2s linear infinite;
-  }
-  @keyframes scanMove {
-    0% { top: 0; }
-    50% { top: calc(100% - 2px); }
-    100% { top: 0; }
-  }
-  .scan-hint {
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    text-align: center;
-    margin-top: 20px;
-    padding: 0 20px;
-  }
-  .scan-hint small { color: var(--muted); font-size: 12px; display: block; margin-top: 4px; }
-  .modal-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 20px;
-    padding: 0 20px;
-  }
-  .modal-btn {
-    flex: 1;
-    padding: 14px;
-    border-radius: var(--radius-sm);
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    border: none;
-    transition: opacity 0.2s;
-  }
-  .modal-btn.cancel { background: var(--surface2); color: var(--text); }
-  .modal-btn.manual { background: var(--accent); color: #000; }
+  .tipo-toggle { display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px; }
+  .tipo-btn { padding:10px;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--muted);transition:all 0.2s;text-align:center; }
+  .tipo-btn.active { background:var(--accent);border-color:var(--accent);color:#000; }
+  .validity-section { display:none; }
+  .validity-section.active { display:block; }
 
-  /* TIPO VALIDADE */
-  .tipo-toggle {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    margin-bottom: 14px;
-  }
-  .tipo-btn {
-    padding: 10px;
-    border-radius: var(--radius-sm);
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--muted);
-    transition: all 0.2s;
-    text-align: center;
-  }
-  .tipo-btn.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #000;
-  }
-  .validity-section { display: none; }
-  .validity-section.active { display: block; }
+  .add-btn { width:100%;padding:15px;background:var(--accent);border:none;border-radius:var(--radius);color:#000;font-family:'Syne',sans-serif;font-weight:800;font-size:16px;cursor:pointer;margin-top:4px;transition:opacity 0.15s,transform 0.1s; }
+  .add-btn:active { opacity:0.85;transform:scale(0.99); }
 
-  /* ADD BUTTON */
-  .add-btn {
-    width: 100%;
-    padding: 15px;
-    background: var(--accent);
-    border: none;
-    border-radius: var(--radius);
-    color: #000;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 4px;
-    letter-spacing: 0.3px;
-    transition: opacity 0.15s, transform 0.1s;
-  }
-  .add-btn:active { opacity: 0.85; transform: scale(0.99); }
+  .summary-bar { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px; }
+  .sum-item { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;text-align:center; }
+  .sum-item .num { font-family:'Syne',sans-serif;font-weight:800;font-size:22px;margin-bottom:2px; }
+  .sum-item .lbl { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px; }
+  .sum-item.danger .num { color:var(--danger); }
+  .sum-item.warn .num { color:var(--warn); }
+  .sum-item.ok .num { color:var(--accent); }
 
-  /* PRODUCT LIST */
-  .list-controls {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .list-controls input {
-    flex: 1;
-    min-width: 120px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    outline: none;
-  }
-  .list-controls input:focus { border-color: var(--accent); }
-  .filter-btn {
-    padding: 10px 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--radius-sm);
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-  }
-  .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .list-controls { display:flex;gap:8px;margin-bottom:12px; }
+  .list-controls input { flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:10px 12px;font-family:'DM Mono',monospace;font-size:13px;outline:none; }
+  .list-controls input:focus { border-color:var(--accent); }
 
-  .select-all-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    padding: 10px 14px;
-    background: var(--surface);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-  }
-  .select-all-row span {
-    font-family: 'Syne', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    flex: 1;
-  }
-  .select-all-row .sel-count {
-    font-size: 12px;
-    color: var(--accent);
-  }
+  .sort-row { display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px; }
+  .sort-row::-webkit-scrollbar { display:none; }
+  .sort-chip { padding:6px 12px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;transition:all 0.15s; }
+  .sort-chip.active { background:var(--surface2);color:var(--text);border-color:var(--accent2); }
 
-  .product-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    margin-bottom: 8px;
-    position: relative;
-    transition: border-color 0.2s;
-  }
-  .product-card.selected {
-    border-color: var(--accent);
-    background: rgba(0,229,160,0.05);
-  }
-  .product-card.vencido { border-left: 3px solid var(--danger); }
-  .product-card.critico { border-left: 3px solid var(--warn); }
-  .product-card.ok { border-left: 3px solid var(--accent); }
+  .select-all-row { display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:10px 14px;background:var(--surface);border-radius:var(--radius-sm);border:1px solid var(--border); }
+  .select-all-row span { font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--muted);flex:1; }
+  .select-all-row .sel-count { font-size:12px;color:var(--accent); }
 
-  .card-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .card-check {
-    width: 22px; height: 22px;
-    border: 2px solid var(--border);
-    border-radius: 6px;
-    flex-shrink: 0;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-    margin-top: 2px;
-    background: var(--bg);
-  }
-  .product-card.selected .card-check {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-  .card-check::after {
-    content: '✓';
-    color: #000;
-    font-size: 13px;
-    font-weight: 700;
-    display: none;
-  }
-  .product-card.selected .card-check::after { display: block; }
+  .product-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px;transition:border-color 0.2s; }
+  .product-card.selected { border-color:var(--accent);background:rgba(0,229,160,0.05); }
+  .product-card.vencido { border-left:3px solid var(--danger); }
+  .product-card.critico { border-left:3px solid var(--warn); }
+  .product-card.ok { border-left:3px solid var(--accent); }
 
-  .card-info { flex: 1; min-width: 0; }
-  .card-name {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 15px;
-    color: var(--text);
-    margin-bottom: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .card-ean {
-    font-size: 11px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
+  .card-header { display:flex;align-items:flex-start;gap:10px;margin-bottom:8px; }
+  .card-check { width:22px;height:22px;border:2px solid var(--border);border-radius:6px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-top:2px;background:var(--bg); }
+  .product-card.selected .card-check { background:var(--accent);border-color:var(--accent); }
+  .card-check::after { content:'✓';color:#000;font-size:13px;font-weight:700;display:none; }
+  .product-card.selected .card-check::after { display:block; }
+  .card-info { flex:1;min-width:0; }
+  .card-name { font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .card-ean { font-size:11px;color:var(--muted); }
+  .card-delete { background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 6px;line-height:1;flex-shrink:0;transition:color 0.2s; }
+  .card-delete:active { color:var(--danger); }
 
-  .card-delete {
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-size: 18px;
-    cursor: pointer;
-    padding: 2px 4px;
-    line-height: 1;
-    flex-shrink: 0;
-    transition: color 0.2s;
-  }
-  .card-delete:active { color: var(--danger); }
+  .card-stats { display:grid;grid-template-columns:1fr 1fr 80px;gap:6px;margin-top:8px; }
+  .stat-box { background:var(--bg);border-radius:8px;padding:8px 10px; }
+  .stat-box .label { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px; }
+  .stat-box .value { font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text); }
+  .stat-box .value.danger { color:var(--danger); }
+  .stat-box .value.warn { color:var(--warn); }
+  .stat-box .value.ok { color:var(--accent); }
+  .stat-box .value.muted { color:var(--muted); }
 
-  .card-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    margin-top: 8px;
-  }
-  .stat-box {
-    background: var(--bg);
-    border-radius: 8px;
-    padding: 8px 10px;
-  }
-  .stat-box .label {
-    font-size: 10px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 2px;
-  }
-  .stat-box .value {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    color: var(--text);
-  }
-  .stat-box .value.danger { color: var(--danger); }
-  .stat-box .value.warn { color: var(--warn); }
-  .stat-box .value.ok { color: var(--accent); }
+  .qty-input { width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;outline:none;text-align:center;-moz-appearance:textfield; }
+  .qty-input::-webkit-outer-spin-button,.qty-input::-webkit-inner-spin-button { -webkit-appearance:none;margin:0; }
+  .qty-input:focus { border-color:var(--accent2); }
 
-  .qty-input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    outline: none;
-    text-align: center;
-    -moz-appearance: textfield;
-  }
-  .qty-input::-webkit-outer-spin-button,
-  .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .qty-input:focus { border-color: var(--accent2); }
+  .empty { text-align:center;padding:50px 20px;color:var(--muted); }
+  .empty .emoji { font-size:48px;display:block;margin-bottom:12px; }
+  .empty p { font-family:'Syne',sans-serif;font-weight:600;font-size:15px;margin-bottom:6px;color:var(--text); }
+  .empty small { font-size:12px; }
 
-  /* EMPTY STATE */
-  .empty {
-    text-align: center;
-    padding: 50px 20px;
-    color: var(--muted);
-  }
-  .empty .emoji { font-size: 48px; display: block; margin-bottom: 12px; }
-  .empty p { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 6px; color: var(--text); }
-  .empty small { font-size: 12px; }
+  .export-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px; }
+  .export-card h3 { font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px; }
+  .export-info { background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6; }
+  .export-info strong { color:var(--accent); }
+  .export-btns { display:grid;gap:10px; }
+  .exp-btn { display:flex;align-items:center;gap:12px;padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);cursor:pointer;transition:all 0.2s;color:var(--text); }
+  .exp-btn:active { opacity:0.8;transform:scale(0.99); }
+  .exp-btn .icon { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0; }
+  .exp-btn.excel .icon { background:rgba(0,200,100,0.15); }
+  .exp-btn.whatsapp .icon { background:rgba(37,211,102,0.15); }
+  .exp-btn .desc { text-align:left; }
+  .exp-btn .desc strong { display:block;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:2px; }
+  .exp-btn .desc small { font-size:11px;color:var(--muted); }
 
-  /* EXPORT SECTION */
-  .export-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .export-card h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .export-info {
-    background: var(--bg);
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 14px;
-    line-height: 1.6;
-  }
-  .export-info strong { color: var(--accent); }
-  .export-btns { display: grid; gap: 10px; }
-  .exp-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--bg);
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--text);
-  }
-  .exp-btn:active { opacity: 0.8; transform: scale(0.99); }
-  .exp-btn .icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    flex-shrink: 0;
-  }
-  .exp-btn.excel .icon { background: rgba(0,200,100,0.15); }
-  .exp-btn.whatsapp .icon { background: rgba(37,211,102,0.15); }
-  .exp-btn .desc { text-align: left; }
-  .exp-btn .desc strong {
-    display: block;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 2px;
-  }
-  .exp-btn .desc small {
-    font-size: 11px;
-    color: var(--muted);
-  }
+  .backup-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px; }
+  .backup-card h3 { font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px; }
+  .backup-info { background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6; }
+  .backup-info strong { color:var(--accent); }
+  .bk-status { background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;margin-bottom:14px; }
+  .bk-row { display:flex;justify-content:space-between;align-items:center;margin-bottom:6px; }
+  .bk-row:last-child { margin-bottom:0; }
+  .bk-row .lbl { color:var(--muted); }
+  .bk-row .val { color:var(--accent);font-weight:600; }
+  .backup-btns { display:grid;gap:10px; }
+  .bk-btn { display:flex;align-items:center;gap:12px;padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);cursor:pointer;color:var(--text);transition:all 0.2s; }
+  .bk-btn:active { opacity:0.8; }
+  .bk-btn .icon { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0; }
+  .bk-btn.baixar .icon { background:rgba(0,153,255,0.15); }
+  .bk-btn.restaurar .icon { background:rgba(255,107,53,0.15); }
+  .bk-btn .desc strong { display:block;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:2px; }
+  .bk-btn .desc small { font-size:11px;color:var(--muted); }
 
-  /* BACKUP SECTION */
-  .backup-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .backup-card h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .backup-info {
-    background: var(--bg);
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 14px;
-    line-height: 1.6;
-  }
-  .backup-info strong { color: var(--accent); }
-  .backup-status {
-    background: var(--bg);
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 12px;
-    margin-bottom: 14px;
-    border: 1px solid var(--border);
-  }
-  .backup-status .status-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  .backup-status .status-item:last-child { margin-bottom: 0; }
-  .backup-status .label { color: var(--muted); }
-  .backup-status .value { color: var(--accent); font-weight: 600; }
-  .backup-btns { display: grid; gap: 10px; }
-  .backup-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--bg);
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--text);
-  }
-  .backup-btn:active { opacity: 0.8; transform: scale(0.99); }
-  .backup-btn .icon {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    flex-shrink: 0;
-  }
-  .backup-btn.auto .icon { background: rgba(0,229,160,0.15); }
-  .backup-btn.manual .icon { background: rgba(0,153,255,0.15); }
-  .backup-btn.restore .icon { background: rgba(255,107,53,0.15); }
-  .backup-btn .desc { text-align: left; }
-  .backup-btn .desc strong {
-    display: block;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 2px;
-  }
-  .backup-btn .desc small {
-    font-size: 11px;
-    color: var(--muted);
-  }
-
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--accent);
-    color: #000;
-    padding: 12px 22px;
-    border-radius: 30px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    z-index: 9999;
-    transition: transform 0.3s ease;
-    white-space: nowrap;
-    box-shadow: 0 8px 32px rgba(0,229,160,0.3);
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.error { background: var(--danger); box-shadow: 0 8px 32px rgba(255,59,92,0.3); }
-
-  /* SORT CONTROLS */
-  .sort-row {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 10px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 2px;
-  }
-  .sort-row::-webkit-scrollbar { display: none; }
-  .sort-chip {
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.15s;
-  }
-  .sort-chip.active { background: var(--surface2); color: var(--text); border-color: var(--accent2); }
-
-  /* summary bar */
-  .summary-bar {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .sum-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px;
-    text-align: center;
-  }
-  .sum-item .num {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 22px;
-    margin-bottom: 2px;
-  }
-  .sum-item .lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  .sum-item.danger .num { color: var(--danger); }
-  .sum-item.warn .num { color: var(--warn); }
-  .sum-item.ok .num { color: var(--accent); }
+  .toast { position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--accent);color:#000;padding:12px 22px;border-radius:30px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;z-index:9999;transition:transform 0.3s ease;white-space:nowrap;box-shadow:0 8px 32px rgba(0,229,160,0.3); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast.error { background:var(--danger);color:#fff;box-shadow:0 8px 32px rgba(255,59,92,0.3); }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="header-icon">📦</div>
-  <div>
-    <h1>Validades</h1>
-    <p>Controle de vencimentos</p>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <div class="backup-indicator" id="backupIndicator" title="Status do backup automático">
-      <span id="backupIcon">💾</span>
-      <span id="backupText">Pronto</span>
-    </div>
+  <div><h1>Validades</h1><p>Controle de vencimentos</p></div>
+  <div class="header-right">
+    <div class="backup-dot" id="backupDot"><span id="backupIcon">💾</span><span id="backupText">Pronto</span></div>
     <div class="header-count" id="totalCount">0</div>
   </div>
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="showTab('cadastro')">➕ Cadastrar</button>
-  <button class="tab" onclick="showTab('lista')">📋 Lista</button>
-  <button class="tab" onclick="showTab('exportar')">📤 Exportar</button>
-  <button class="tab" onclick="showTab('backup')">💾 Backup</button>
+  <button class="tab active" onclick="showTab('cadastro',this)">➕ Cadastrar</button>
+  <button class="tab" onclick="showTab('lista',this)">📋 Lista</button>
+  <button class="tab" onclick="showTab('exportar',this)">📤 Exportar</button>
+  <button class="tab" onclick="showTab('backup',this)">💾 Backup</button>
 </div>
 
-<!-- ========== CADASTRAR ========== -->
+<!-- CADASTRAR -->
 <div class="section active" id="tab-cadastro">
-
   <div class="form-card">
     <h3>Produto</h3>
-
     <div class="field">
       <label>Nome do Produto</label>
       <input type="text" id="nomeProduto" placeholder="Ex: Leite Integral 1L" autocomplete="off">
     </div>
-
     <div class="field">
-      <label>Código EAN</label>
+      <label>Código EAN <span style="color:var(--muted);font-size:10px;">(opcional)</span></label>
       <div class="barcode-row">
         <div class="field" style="margin-bottom:0;">
           <input type="text" id="codigoEAN" placeholder="7891234567890" inputmode="numeric" autocomplete="off" oninput="onEanInput(this.value)">
         </div>
-        <button class="scan-btn" onclick="openCamera()" title="Escanear código de barras">📷</button>
+        <button class="scan-btn" onclick="openCamera()">📷</button>
       </div>
-      <div id="eanStatus" style="display:none; margin-top:6px; font-size:12px; padding:8px 10px; border-radius:8px;"></div>
+      <div id="eanStatus" style="display:none;margin-top:6px;font-size:12px;padding:8px 10px;border-radius:8px;"></div>
     </div>
-
     <div class="field">
       <label>Quantidade <span style="color:var(--muted);font-size:10px;">(opcional)</span></label>
       <input type="number" id="qtdProduto" placeholder="Ex: 10" min="0" inputmode="numeric" autocomplete="off">
@@ -783,92 +222,56 @@
 
   <div class="form-card">
     <h3>Validade</h3>
-
     <div class="tipo-toggle">
       <button class="tipo-btn active" id="btnTipoData" onclick="setTipo('data')">📅 Data fixa</button>
       <button class="tipo-btn" id="btnTipoFab" onclick="setTipo('fabricacao')">🏭 A partir fabricação</button>
     </div>
 
-    <!-- Data fixa -->
     <div class="validity-section active" id="secData">
-      <!-- sub-toggle: dia completo vs só mês/ano -->
       <div style="display:flex;gap:6px;margin-bottom:10px;">
         <button class="tipo-btn active" id="btnDiaCompleto" onclick="setDataMode('completo')" style="font-size:11px;padding:7px 10px;">📅 Dia/Mês/Ano</button>
         <button class="tipo-btn" id="btnMesAno" onclick="setDataMode('mesano')" style="font-size:11px;padding:7px 10px;">📆 Mês/Ano</button>
       </div>
-      <!-- Dia + Mês + Ano -->
       <div class="row3" id="modoCompleto">
-        <div class="field">
-          <label>Dia</label>
-          <input type="number" id="vencDia" placeholder="DD" min="1" max="31" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>Mês</label>
-          <input type="number" id="vencMes" placeholder="MM" min="1" max="12" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>Ano</label>
-          <input type="number" id="vencAno" placeholder="AAAA" min="2020" max="2099" inputmode="numeric">
-        </div>
+        <div class="field"><label>Dia</label><input type="number" id="vencDia" placeholder="DD" min="1" max="31" inputmode="numeric"></div>
+        <div class="field"><label>Mês</label><input type="number" id="vencMes" placeholder="MM" min="1" max="12" inputmode="numeric"></div>
+        <div class="field"><label>Ano</label><input type="number" id="vencAno" placeholder="AAAA" min="2020" max="2099" inputmode="numeric"></div>
       </div>
-      <!-- Só Mês + Ano (vence no último dia do mês) -->
       <div class="row2" id="modoMesAno" style="display:none;">
-        <div class="field">
-          <label>Mês</label>
-          <input type="number" id="vencMesSo" placeholder="MM" min="1" max="12" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>Ano</label>
-          <input type="number" id="vencAnoSo" placeholder="AAAA" min="2020" max="2099" inputmode="numeric">
-        </div>
+        <div class="field"><label>Mês</label><input type="number" id="vencMesSo" placeholder="MM" min="1" max="12" inputmode="numeric"></div>
+        <div class="field"><label>Ano</label><input type="number" id="vencAnoSo" placeholder="AAAA" min="2020" max="2099" inputmode="numeric"></div>
       </div>
-      <div id="previewMesAno" style="display:none; margin-top:6px; padding:8px 10px; background:var(--bg); border-radius:8px; font-size:12px; color:var(--accent);">
+      <div id="previewMesAno" style="display:none;margin-top:6px;padding:8px 10px;background:var(--bg);border-radius:8px;font-size:12px;color:var(--accent);">
         📅 Vence no último dia do mês selecionado
       </div>
     </div>
 
-    <!-- A partir da fabricação -->
     <div class="validity-section" id="secFab">
       <div class="row2">
-        <div class="field">
-          <label>Fabricação — Dia</label>
-          <input type="number" id="fabDia" placeholder="DD" min="1" max="31" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>Fabricação — Mês</label>
-          <input type="number" id="fabMes" placeholder="MM" min="1" max="12" inputmode="numeric">
-        </div>
+        <div class="field"><label>Fabricação — Dia</label><input type="number" id="fabDia" placeholder="DD" min="1" max="31" inputmode="numeric"></div>
+        <div class="field"><label>Fabricação — Mês</label><input type="number" id="fabMes" placeholder="MM" min="1" max="12" inputmode="numeric"></div>
       </div>
       <div class="row2">
-        <div class="field">
-          <label>Fabricação — Ano</label>
-          <input type="number" id="fabAno" placeholder="AAAA" min="2020" max="2099" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label>Validade (meses)</label>
-          <input type="number" id="mesesVenc" placeholder="Ex: 12" min="1" max="120" inputmode="numeric">
-        </div>
+        <div class="field"><label>Fabricação — Ano</label><input type="number" id="fabAno" placeholder="AAAA" min="2020" max="2099" inputmode="numeric"></div>
+        <div class="field"><label>Validade (meses)</label><input type="number" id="mesesVenc" placeholder="Ex: 12" min="1" max="120" inputmode="numeric"></div>
       </div>
-      <div id="previewVencimento" style="display:none; padding:10px; background:var(--bg); border-radius:8px; margin-top:4px; font-size:13px; color:var(--accent);"></div>
+      <div id="previewVencimento" style="display:none;padding:10px;background:var(--bg);border-radius:8px;margin-top:4px;font-size:13px;color:var(--accent);"></div>
     </div>
   </div>
 
   <button class="add-btn" onclick="adicionarProduto()">＋ Adicionar Produto</button>
 </div>
 
-<!-- ========== LISTA ========== -->
+<!-- LISTA -->
 <div class="section" id="tab-lista">
-
-  <div class="summary-bar" id="summaryBar">
+  <div class="summary-bar">
     <div class="sum-item danger"><div class="num" id="sumVencido">0</div><div class="lbl">Vencidos</div></div>
     <div class="sum-item warn"><div class="num" id="sumCritico">0</div><div class="lbl">≤20 dias</div></div>
     <div class="sum-item ok"><div class="num" id="sumOk">0</div><div class="lbl">Ok</div></div>
   </div>
-
   <div class="list-controls">
     <input type="text" id="searchInput" placeholder="🔍 Buscar produto ou EAN..." oninput="renderLista()">
   </div>
-
   <div class="sort-row">
     <button class="sort-chip active" onclick="setSort('validade')" id="sort-validade">↑ Validade</button>
     <button class="sort-chip" onclick="setSort('nome')" id="sort-nome">A→Z Nome</button>
@@ -877,147 +280,98 @@
     <button class="sort-chip" onclick="setFilter('criticos')" id="filter-criticos">🟠 ≤20 dias</button>
     <button class="sort-chip" onclick="setFilter('ok')" id="filter-ok">🟢 Ok</button>
   </div>
-
   <div class="select-all-row">
     <input type="checkbox" id="checkAll" onchange="toggleAll(this)" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);">
     <span>Selecionar todos visíveis</span>
     <span class="sel-count" id="selCount">0 selecionados</span>
   </div>
-
   <div id="productList"></div>
 </div>
 
-<!-- ========== EXPORTAR ========== -->
+<!-- EXPORTAR -->
 <div class="section" id="tab-exportar">
   <div class="export-card">
     <h3>📤 Exportar Selecionados</h3>
     <div class="export-info">
-      Vá até a <strong>Lista</strong>, marque os produtos desejados com ✓ e volte aqui para exportar.<br>
+      Vá até a <strong>Lista</strong>, marque os produtos e volte aqui.<br>
       <strong id="exportSelCount">0 produto(s)</strong> selecionado(s).
     </div>
-
     <div class="export-btns">
       <button class="exp-btn excel" onclick="exportarExcel()">
         <div class="icon">📊</div>
-        <div class="desc">
-          <strong>Exportar Excel (.xlsx)</strong>
-          <small>Planilha com COD | Produto | Validade | Faltam</small>
-        </div>
+        <div class="desc"><strong>Exportar Excel (.xlsx)</strong><small>COD | Produto | Validade | Qtd | Faltam</small></div>
       </button>
-
       <button class="exp-btn whatsapp" onclick="exportarWhatsApp()">
         <div class="icon">💬</div>
-        <div class="desc">
-          <strong>Enviar pelo WhatsApp</strong>
-          <small>Tabela formatada em texto para mensagem</small>
-        </div>
+        <div class="desc"><strong>Enviar pelo WhatsApp</strong><small>Tabela formatada em texto</small></div>
       </button>
-
-      <button class="exp-btn" style="border-color:var(--border);" onclick="exportarTexto()">
+      <button class="exp-btn" onclick="exportarTexto()">
         <div class="icon" style="background:rgba(107,122,150,0.15);">📄</div>
-        <div class="desc">
-          <strong>Copiar como Texto</strong>
-          <small>Copia lista formatada para área de transferência</small>
-        </div>
+        <div class="desc"><strong>Copiar como Texto</strong><small>Copia para área de transferência</small></div>
       </button>
     </div>
   </div>
-
   <div class="export-card" style="border-color:var(--border);">
-    <h3 style="color:var(--muted);font-size:12px;">⚙️ Prévia da exportação</h3>
-    <pre id="exportPreview" style="font-size:11px; color:var(--muted); white-space:pre-wrap; line-height:1.6; max-height:200px; overflow-y:auto;"></pre>
+    <h3 style="color:var(--muted);font-size:12px;">⚙️ Prévia</h3>
+    <pre id="exportPreview" style="font-size:11px;color:var(--muted);white-space:pre-wrap;line-height:1.6;max-height:200px;overflow-y:auto;"></pre>
   </div>
 </div>
 
-<!-- ========== BACKUP ========== -->
+<!-- BACKUP -->
 <div class="section" id="tab-backup">
   <div class="backup-card">
-    <h3>💾 Backup Automático</h3>
+    <h3>💾 Backup de Dados</h3>
     <div class="backup-info">
-      Seus dados são salvos <strong>automaticamente a cada alteração</strong> em um arquivo JSON no seu dispositivo.<br>
-      Você também pode fazer <strong>backup manual</strong> ou <strong>restaurar</strong> dados de um backup anterior.
+      Dados salvos <strong>automaticamente</strong> no navegador do aparelho.<br>
+      Faça backups em arquivo JSON para proteger contra limpeza do navegador ou troca de celular.
     </div>
-
-    <div class="backup-status">
-      <div class="status-item">
-        <span class="label">Status do Auto-backup:</span>
-        <span class="value" id="autoBackupStatus">✓ Ativo</span>
-      </div>
-      <div class="status-item">
-        <span class="label">Último backup:</span>
-        <span class="value" id="lastBackupTime">Nunca</span>
-      </div>
-      <div class="status-item">
-        <span class="label">Produtos salvos:</span>
-        <span class="value" id="backupProductCount">0</span>
-      </div>
+    <div class="bk-status">
+      <div class="bk-row"><span class="lbl">Último backup:</span><span class="val" id="lastBackupTime">Nunca</span></div>
+      <div class="bk-row"><span class="lbl">Produtos salvos:</span><span class="val" id="backupProductCount">0</span></div>
     </div>
-
     <div class="backup-btns">
-      <button class="backup-btn auto" onclick="forceBackup()">
-        <div class="icon">💾</div>
-        <div class="desc">
-          <strong>Fazer Backup Agora</strong>
-          <small>Salva arquivo JSON com todos os dados</small>
-        </div>
-      </button>
-
-      <button class="backup-btn restore" onclick="document.getElementById('restoreFile').click()">
-        <div class="icon">⬆️</div>
-        <div class="desc">
-          <strong>Restaurar do Backup</strong>
-          <small>Carrega dados de um arquivo JSON anterior</small>
-        </div>
-      </button>
-
-      <button class="backup-btn manual" onclick="baixarBackupAtual()">
+      <button class="bk-btn baixar" onclick="baixarBackup()">
         <div class="icon">📥</div>
-        <div class="desc">
-          <strong>Baixar Backup JSON</strong>
-          <small>Salva cópia dos dados para segurança</small>
-        </div>
+        <div class="desc"><strong>Baixar Backup JSON</strong><small>Salva arquivo com todos os produtos</small></div>
+      </button>
+      <button class="bk-btn restaurar" onclick="document.getElementById('restoreFile').click()">
+        <div class="icon">⬆️</div>
+        <div class="desc"><strong>Restaurar do Backup</strong><small>Carrega dados de um arquivo JSON anterior</small></div>
       </button>
     </div>
-
-    <input type="file" id="restoreFile" accept=".json" style="display:none;" onchange="restaurarDoBackup(event)">
+    <input type="file" id="restoreFile" accept=".json" style="display:none;" onchange="restaurarBackup(event)">
   </div>
 </div>
 
-<!-- CAMERA MODAL -->
+<!-- CAMERA -->
 <div class="modal-overlay" id="cameraModal">
   <div class="camera-wrap">
     <video id="video" autoplay playsinline muted></video>
     <div class="scan-frame"><div class="scan-line"></div></div>
   </div>
-  <p class="scan-hint">
-    Posicione o código de barras no centro do quadro
-    <small>Aproxime a câmera até o código ficar nítido</small>
-  </p>
+  <p class="scan-hint">Posicione o código no centro do quadro<small>Câmera traseira / aproxime até ficar nítido</small></p>
   <div class="modal-actions">
     <button class="modal-btn cancel" onclick="closeCamera()">✕ Cancelar</button>
-    <button class="modal-btn manual" onclick="digitarManual()">✏️ Digitar EAN</button>
+    <button class="modal-btn confirm" onclick="digitarManual()">✏️ Digitar EAN</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ===================== STATE =====================
+// ── MIGRAÇÃO: garante que todas as datas salvas estejam em YYYY-MM-DD ─────────
 function normalizarData(str) {
   if (!str) return null;
   str = String(str).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
-    const parts = str.split('/');
-    const d = parts[0].padStart(2,'0');
-    const m = parts[1].padStart(2,'0');
-    const y = parts[2];
-    return y + '-' + m + '-' + d;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;                    // já correto
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {                        // DD/MM/YYYY
+    const p = str.split('/');
+    return p[2] + '-' + p[1].padStart(2,'0') + '-' + p[0].padStart(2,'0');
   }
-  const parts = str.split(/[\/\-\.]/);
-  if (parts.length === 3) {
-    if (parts[2].length === 4) return parts[2] + '-' + parts[1].padStart(2,'0') + '-' + parts[0].padStart(2,'0');
-    if (parts[0].length === 4) return parts[0] + '-' + parts[1].padStart(2,'0') + '-' + parts[2].padStart(2,'0');
+  const p = str.split(/[-\/\.]/);
+  if (p.length === 3) {
+    if (p[0].length === 4) return p[0]+'-'+p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0');
+    if (p[2].length === 4) return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
   }
   return null;
 }
@@ -1026,143 +380,57 @@ function migrarProdutos(lista) {
   let alterou = false;
   lista.forEach(p => {
     if (p.vencimento) {
-      const norm = normalizarData(p.vencimento);
-      if (norm && norm !== p.vencimento) { p.vencimento = norm; alterou = true; }
+      const n = normalizarData(p.vencimento);
+      if (n && n !== p.vencimento) { p.vencimento = n; alterou = true; }
     }
   });
   if (alterou) localStorage.setItem('validades_produtos', JSON.stringify(lista));
   return lista;
 }
 
-let produtos = migrarProdutos(JSON.parse(localStorage.getItem('validades_produtos') || '[]'));
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let produtos     = migrarProdutos(JSON.parse(localStorage.getItem('validades_produtos') || '[]'));
 let tipoValidade = 'data';
-let dataMode = 'completo';
-let sortMode = 'validade';
-let filterMode = 'todos';
-let videoStream = null;
-let scanInterval = null;
-let lastBackupTime = localStorage.getItem('validades_lastBackup') || null;
+let dataMode     = 'completo';
+let sortMode     = 'validade';
+let filterMode   = 'todos';
+let zxingReader  = null;
 
-// ===================== BACKUP AUTOMÁTICO =====================
-function gerarNomeBackup() {
-  const now = new Date();
-  const ano = now.getFullYear();
-  const mes = String(now.getMonth() + 1).padStart(2, '0');
-  const dia = String(now.getDate()).padStart(2, '0');
-  const horas = String(now.getHours()).padStart(2, '0');
-  const minutos = String(now.getMinutes()).padStart(2, '0');
-  return `validades_backup_${ano}${mes}${dia}_${horas}${minutos}.json`;
-}
-
-function gerarBackupJSON() {
-  return {
-    versao: '2.0',
-    dataBackup: new Date().toISOString(),
-    totalProdutos: produtos.length,
-    produtos: produtos,
-    descricao: 'Backup automático do Controle de Validade'
-  };
-}
-
-function forceBackup() {
-  const backup = gerarBackupJSON();
-  const dataStr = JSON.stringify(backup, null, 2);
-  lastBackupTime = new Date().toLocaleString('pt-BR');
-  localStorage.setItem('validades_lastBackup', lastBackupTime);
-  localStorage.setItem('validades_ultimoBackupJSON', dataStr);
-  updateBackupStatus();
-  toast('✓ Backup salvo com sucesso!');
-}
-
-function baixarBackupAtual() {
-  const backup = gerarBackupJSON();
-  const dataStr = JSON.stringify(backup, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = gerarNomeBackup();
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('📥 Arquivo baixado!');
-}
-
-function restaurarDoBackup(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const backup = JSON.parse(e.target.result);
-      if (!backup.produtos || !Array.isArray(backup.produtos)) {
-        toast('❌ Arquivo inválido!', true);
-        return;
-      }
-      if (confirm(`Deseja restaurar ${backup.produtos.length} produto(s)?\n\nIsso irá sobrescrever os dados atuais!`)) {
-        produtos = backup.produtos;
-        localStorage.setItem('validades_produtos', JSON.stringify(produtos));
-        forceBackup();
-        renderLista();
-        updateSummary();
-        updateExportCount();
-        document.getElementById('totalCount').textContent = produtos.length;
-        toast('✓ Dados restaurados com sucesso!');
-      }
-    } catch (err) {
-      console.error('Erro ao restaurar:', err);
-      toast('❌ Erro ao ler arquivo!', true);
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-function updateBackupStatus() {
-  const productCount = produtos.length;
-  document.getElementById('backupProductCount').textContent = productCount;
-  if (lastBackupTime) {
-    document.getElementById('lastBackupTime').textContent = lastBackupTime;
-  }
-}
-
-// ===================== UTILS =====================
+// ── UTILS ──────────────────────────────────────────────────────────────────────
 function salvar() {
   localStorage.setItem('validades_produtos', JSON.stringify(produtos));
-  forceBackup();
   renderLista();
   updateSummary();
   updateExportCount();
   document.getElementById('totalCount').textContent = produtos.length;
-  updateBackupIndicator();
+  document.getElementById('backupDot').className = 'backup-dot ok';
+  document.getElementById('backupIcon').textContent = '✓';
+  document.getElementById('backupText').textContent = 'Salvo';
+  updateBackupStatus();
 }
 
-function updateBackupIndicator() {
-  const icon = document.getElementById('backupIcon');
-  const text = document.getElementById('backupText');
-  const indicator = document.getElementById('backupIndicator');
-  icon.textContent = '✓';
-  text.textContent = 'Backup OK';
-  indicator.className = 'backup-indicator synced';
-}
-
-function toast(msg, err = false) {
+function toast(msg, err=false) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.className = 'toast show' + (err ? ' error' : '');
-  setTimeout(() => el.className = 'toast', 2500);
+  setTimeout(() => el.className='toast', 2600);
 }
 
-function parseDateLocal(dateStr) {
-  if (!dateStr || typeof dateStr !== 'string') return null;
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return null;
-  const y = parseInt(parts[0], 10);
-  const m = parseInt(parts[1], 10) - 1;
-  const d = parseInt(parts[2], 10);
+function gerarId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// ── DATAS ──────────────────────────────────────────────────────────────────────
+// Parseia "YYYY-MM-DD" como data LOCAL — evita bug de fuso do Safari/iOS
+// que interpreta new Date("2026-08-31") como UTC meia-noite e desloca o dia
+function parseDateLocal(str) {
+  if (!str || typeof str !== 'string') return null;
+  const p = str.split('-');
+  if (p.length !== 3) return null;
+  const y = parseInt(p[0], 10);
+  const m = parseInt(p[1], 10) - 1;   // 0-indexed
+  const d = parseInt(p[2], 10);
   if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
   const dt = new Date(y, m, d);
+  // Rejeita datas inválidas como 31/02 (new Date vira março)
   if (dt.getFullYear() !== y || dt.getMonth() !== m || dt.getDate() !== d) return null;
   return dt;
 }
@@ -1170,524 +438,410 @@ function parseDateLocal(dateStr) {
 function diasAte(dateStr) {
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const venc = parseDateLocal(dateStr);
-  if (!venc) return NaN;
+  if (!venc) return null;              // null = data inválida ou ausente
   venc.setHours(0,0,0,0);
   return Math.round((venc - hoje) / 86400000);
 }
 
 function formatarData(dateStr) {
-  if (!dateStr || typeof dateStr !== 'string') return '—';
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return dateStr;
-  const [y, m, d] = parts;
-  if (!y || !m || !d) return '—';
-  return `${d}/${m}/${y}`;
+  if (!dateStr) return '—';
+  const p = String(dateStr).split('-');
+  if (p.length !== 3) return '—';
+  return `${p[2]}/${p[1]}/${p[0]}`;
 }
 
+// null = inválida → trata como ok (não polui contadores)
 function statusClass(dias) {
-  if (isNaN(dias)) return 'ok';
-  if (dias < 0) return 'vencido';
-  if (dias <= 20) return 'critico';
+  if (dias === null)  return 'ok';
+  if (dias < 0)       return 'vencido';
+  if (dias <= 20)     return 'critico';
   return 'ok';
 }
-
 function statusColor(dias) {
-  if (isNaN(dias)) return 'muted';
-  if (dias < 0) return 'danger';
-  if (dias <= 20) return 'warn';
+  if (dias === null)  return 'muted';
+  if (dias < 0)       return 'danger';
+  if (dias <= 20)     return 'warn';
   return 'ok';
 }
 
-function gerarId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
-// ===================== TABS =====================
-function showTab(tab) {
+// ── TABS ───────────────────────────────────────────────────────────────────────
+function showTab(tab, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  event.currentTarget.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (el) el.classList.add('active');
   if (tab === 'exportar') updateExportPreview();
-  if (tab === 'backup') updateBackupStatus();
+  if (tab === 'backup')   updateBackupStatus();
 }
 
-// ===================== TIPO VALIDADE =====================
+// ── TIPO VALIDADE ──────────────────────────────────────────────────────────────
 function setTipo(tipo) {
   tipoValidade = tipo;
-  document.getElementById('btnTipoData').classList.toggle('active', tipo === 'data');
-  document.getElementById('btnTipoFab').classList.toggle('active', tipo === 'fabricacao');
-  document.getElementById('secData').classList.toggle('active', tipo === 'data');
-  document.getElementById('secFab').classList.toggle('active', tipo === 'fabricacao');
+  document.getElementById('btnTipoData').classList.toggle('active', tipo==='data');
+  document.getElementById('btnTipoFab').classList.toggle('active', tipo==='fabricacao');
+  document.getElementById('secData').classList.toggle('active', tipo==='data');
+  document.getElementById('secFab').classList.toggle('active', tipo==='fabricacao');
 }
-
 function setDataMode(mode) {
   dataMode = mode;
-  document.getElementById('btnDiaCompleto').classList.toggle('active', mode === 'completo');
-  document.getElementById('btnMesAno').classList.toggle('active', mode === 'mesano');
-  document.getElementById('modoCompleto').style.display = mode === 'completo' ? '' : 'none';
-  document.getElementById('modoMesAno').style.display = mode === 'mesano' ? '' : 'none';
-  document.getElementById('previewMesAno').style.display = mode === 'mesano' ? 'block' : 'none';
+  document.getElementById('btnDiaCompleto').classList.toggle('active', mode==='completo');
+  document.getElementById('btnMesAno').classList.toggle('active', mode==='mesano');
+  document.getElementById('modoCompleto').style.display  = mode==='completo' ? '' : 'none';
+  document.getElementById('modoMesAno').style.display    = mode==='mesano'   ? '' : 'none';
+  document.getElementById('previewMesAno').style.display = mode==='mesano'   ? 'block' : 'none';
 }
 
 ['fabDia','fabMes','fabAno','mesesVenc'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
-    const d = parseInt(document.getElementById('fabDia').value);
-    const m = parseInt(document.getElementById('fabMes').value);
-    const a = parseInt(document.getElementById('fabAno').value);
-    const meses = parseInt(document.getElementById('mesesVenc').value);
-    const prev = document.getElementById('previewVencimento');
-    if (d && m && a && meses) {
-      const fab = new Date(a, m-1, d);
-      fab.setMonth(fab.getMonth() + meses);
-      prev.style.display = 'block';
-      prev.textContent = `📅 Vencimento calculado: ${String(fab.getDate()).padStart(2,'0')}/${String(fab.getMonth()+1).padStart(2,'0')}/${fab.getFullYear()}`;
-    } else {
-      prev.style.display = 'none';
-    }
+    const d=parseInt(document.getElementById('fabDia').value);
+    const m=parseInt(document.getElementById('fabMes').value);
+    const a=parseInt(document.getElementById('fabAno').value);
+    const ms=parseInt(document.getElementById('mesesVenc').value);
+    const prev=document.getElementById('previewVencimento');
+    if(d&&m&&a&&ms){
+      const fab=new Date(a,m-1,d); fab.setMonth(fab.getMonth()+ms);
+      prev.style.display='block';
+      prev.textContent=`📅 Vencimento: ${String(fab.getDate()).padStart(2,'0')}/${String(fab.getMonth()+1).padStart(2,'0')}/${fab.getFullYear()}`;
+    } else { prev.style.display='none'; }
   });
 });
 
-// ===================== CAMERA & BARCODE =====================
+// ── EAN VALIDATION ─────────────────────────────────────────────────────────────
+function validateEAN13(e) {
+  if(e.length!==13) return false;
+  let s=0; for(let i=0;i<12;i++) s+=parseInt(e[i])*(i%2===0?1:3);
+  return (10-(s%10))%10===parseInt(e[12]);
+}
+function validateEAN8(e) {
+  if(e.length!==8) return false;
+  let s=0; for(let i=0;i<7;i++) s+=parseInt(e[i])*(i%2===0?3:1);
+  return (10-(s%10))%10===parseInt(e[7]);
+}
+
+function onEanInput(value) {
+  const st = document.getElementById('eanStatus');
+  const clean = value.replace(/\D/g,'');
+  if(!clean){ st.style.display='none'; return; }
+  st.style.display='block';
+  let valid=null, label='';
+  if(clean.length===13){ valid=validateEAN13(clean); label='EAN-13'; }
+  else if(clean.length===8){ valid=validateEAN8(clean); label='EAN-8'; }
+  if(valid===true){
+    st.style.background='rgba(0,229,160,0.1)'; st.style.color='var(--accent)'; st.style.border='1px solid rgba(0,229,160,0.3)';
+    st.textContent=`✅ ${label} válido`;
+  } else if(valid===false){
+    st.style.background='rgba(255,107,53,0.1)'; st.style.color='var(--warn)'; st.style.border='1px solid rgba(255,107,53,0.3)';
+    st.textContent=`⚠️ ${label} inválido (checksum)`;
+  } else {
+    st.style.background='rgba(107,122,150,0.1)'; st.style.color='var(--muted)'; st.style.border='1px solid var(--border)';
+    st.textContent=`${clean.length} dígito(s) — esperado 8 ou 13`;
+  }
+}
+
+// ── CÂMERA ─────────────────────────────────────────────────────────────────────
+// Usa ZXing.BrowserMultiFormatReader com decodeFromVideoDevice
+// (decodeFromVideoElement em setInterval NÃO funciona com ZXing)
 async function openCamera() {
-  const modal = document.getElementById('cameraModal');
-  modal.classList.add('open');
+  document.getElementById('cameraModal').classList.add('open');
   try {
-    videoStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    if (typeof ZXing === 'undefined') throw new Error('ZXing não carregado');
+
+    zxingReader = new ZXing.BrowserMultiFormatReader();
+
+    // Prefere câmera traseira
+    const devices = await zxingReader.listVideoInputDevices();
+    let deviceId;
+    if (devices.length > 0) {
+      const rear = devices.find(d => /back|rear|environment|traseira/i.test(d.label));
+      deviceId = rear ? rear.deviceId : devices[devices.length - 1].deviceId;
+    }
+
+    // decodeFromVideoDevice cuida do stream internamente — não chame getUserMedia antes
+    await zxingReader.decodeFromVideoDevice(deviceId, 'video', (result, err) => {
+      if (result) {
+        const code = result.getText();
+        document.getElementById('codigoEAN').value = code;
+        onEanInput(code);
+        closeCamera();
+        toast('📷 Código lido: ' + code);
+      }
+      // NotFoundException é normal enquanto não lê nada — ignorar
     });
-    document.getElementById('video').srcObject = videoStream;
-    startAdvancedBarcodeScanning();
-  } catch (err) {
-    console.error('Erro ao acessar câmera:', err);
-    toast('❌ Não foi possível acessar a câmera', true);
+
+  } catch(e) {
+    console.error('Câmera erro:', e);
+    toast('Câmera indisponível. Use "Digitar EAN".', true);
     closeCamera();
   }
 }
 
 function closeCamera() {
-  const modal = document.getElementById('cameraModal');
-  modal.classList.remove('open');
-  if (scanInterval) clearInterval(scanInterval);
-  if (videoStream) {
-    videoStream.getTracks().forEach(t => t.stop());
-    videoStream = null;
-  }
-}
-
-async function startAdvancedBarcodeScanning() {
-  const codeReader = new ZXing.BrowserMultiFormatReader();
-  const videoElement = document.getElementById('video');
-  let lastScannedCode = null;
-  try {
-    const track = videoStream.getVideoTracks()[0];
-    const capabilities = track.getCapabilities();
-    if (capabilities.zoom) {
-      const zoom = capabilities.zoom.max / 2;
-      await track.applyConstraints({ zoom: zoom });
-    }
-    if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-      await track.applyConstraints({ focusMode: 'continuous' });
-    }
-  } catch (e) {
-    console.log('Ajustes de câmera não disponíveis');
-  }
-  scanInterval = setInterval(async () => {
-    try {
-      const result = await codeReader.decodeFromVideoElement(videoElement);
-      if (result) {
-        const code = result.text.trim();
-        if (code === lastScannedCode) return;
-        lastScannedCode = code;
-        const cleanCode = code.replace(/\D/g, '');
-        if (cleanCode.length === 13 || cleanCode.length === 8) {
-          document.getElementById('codigoEAN').value = code;
-          onEanInput(code);
-          closeCamera();
-          toast('✓ Código lido: ' + code);
-        }
-      }
-    } catch (err) {
-      // Silenciar erros
-    }
-  }, 300);
+  document.getElementById('cameraModal').classList.remove('open');
+  if (zxingReader) { try { zxingReader.reset(); } catch(e){} zxingReader = null; }
 }
 
 function digitarManual() {
   closeCamera();
-  document.getElementById('codigoEAN').focus();
+  setTimeout(() => {
+    const ean = prompt('Digite o código EAN:');
+    if (ean && ean.trim()) { document.getElementById('codigoEAN').value = ean.trim(); onEanInput(ean.trim()); toast('EAN inserido'); }
+  }, 300);
 }
 
-function onEanInput(value) {
-  const statusEl = document.getElementById('eanStatus');
-  const input = document.getElementById('codigoEAN');
-  if (!value) {
-    statusEl.style.display = 'none';
-    input.style.borderColor = 'var(--border)';
-    return;
-  }
-  const cleanValue = value.replace(/\D/g, '');
-  if (cleanValue.length === 13) {
-    const isValid = validateEAN13(cleanValue);
-    statusEl.style.display = 'block';
-    if (isValid) {
-      statusEl.style.background = 'rgba(0, 229, 160, 0.1)';
-      statusEl.style.color = 'var(--accent)';
-      statusEl.textContent = `✓ EAN-13 válido`;
-      input.style.borderColor = 'var(--accent)';
-    } else {
-      statusEl.style.background = 'rgba(255, 107, 53, 0.1)';
-      statusEl.style.color = 'var(--warn)';
-      statusEl.textContent = `⚠ EAN-13 inválido (checksum)`;
-      input.style.borderColor = 'var(--warn)';
-    }
-  } else if (cleanValue.length === 8) {
-    const isValid = validateEAN8(cleanValue);
-    statusEl.style.display = 'block';
-    if (isValid) {
-      statusEl.style.background = 'rgba(0, 229, 160, 0.1)';
-      statusEl.style.color = 'var(--accent)';
-      statusEl.textContent = `✓ EAN-8 válido`;
-      input.style.borderColor = 'var(--accent)';
-    } else {
-      statusEl.style.background = 'rgba(255, 107, 53, 0.1)';
-      statusEl.style.color = 'var(--warn)';
-      statusEl.textContent = `⚠ EAN-8 inválido (checksum)`;
-      input.style.borderColor = 'var(--warn)';
-    }
-  } else if (cleanValue.length > 0) {
-    statusEl.style.display = 'block';
-    statusEl.style.background = 'rgba(255, 107, 53, 0.1)';
-    statusEl.style.color = 'var(--warn)';
-    statusEl.textContent = `⚠ ${cleanValue.length} dígitos (esperado: 8 ou 13)`;
-    input.style.borderColor = 'var(--warn)';
-  } else {
-    statusEl.style.display = 'none';
-    input.style.borderColor = 'var(--border)';
-  }
-}
-
-function validateEAN13(ean) {
-  if (ean.length !== 13) return false;
-  let sum = 0;
-  for (let i = 0; i < 12; i++) {
-    const digit = parseInt(ean[i], 10);
-    sum += digit * (i % 2 === 0 ? 1 : 3);
-  }
-  const checksum = (10 - (sum % 10)) % 10;
-  return checksum === parseInt(ean[12], 10);
-}
-
-function validateEAN8(ean) {
-  if (ean.length !== 8) return false;
-  let sum = 0;
-  for (let i = 0; i < 7; i++) {
-    const digit = parseInt(ean[i], 10);
-    sum += digit * (i % 2 === 0 ? 3 : 1);
-  }
-  const checksum = (10 - (sum % 10)) % 10;
-  return checksum === parseInt(ean[7], 10);
-}
-
-// ===================== ADICIONAR PRODUTO =====================
+// ── ADICIONAR ──────────────────────────────────────────────────────────────────
 function adicionarProduto() {
   const nome = document.getElementById('nomeProduto').value.trim();
-  const ean = document.getElementById('codigoEAN').value.trim();
-  const qtd = parseInt(document.getElementById('qtdProduto').value) || 1;
-  if (!nome) {
-    toast('⚠ Digite o nome do produto', true);
-    return;
-  }
+  const ean  = document.getElementById('codigoEAN').value.trim();
+  const qtd  = document.getElementById('qtdProduto').value.trim();
+  if (!nome) { toast('Informe o nome do produto!', true); return; }
+
   let vencimento = null;
   if (tipoValidade === 'data') {
-    if (dataMode === 'completo') {
-      const dia = parseInt(document.getElementById('vencDia').value);
-      const mes = parseInt(document.getElementById('vencMes').value);
-      const ano = parseInt(document.getElementById('vencAno').value);
-      if (!dia || !mes || !ano) {
-        toast('⚠ Preencha todos os campos de data', true);
-        return;
-      }
-      vencimento = `${String(ano).padStart(4,'0')}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    if (dataMode === 'mesano') {
+      const m = parseInt(document.getElementById('vencMesSo').value);
+      const a = parseInt(document.getElementById('vencAnoSo').value);
+      if (!m||!a) { toast('Informe mês e ano!', true); return; }
+      if (m<1||m>12) { toast('Mês inválido!', true); return; }
+      const ultimo = new Date(a, m, 0).getDate();
+      vencimento = `${a}-${String(m).padStart(2,'0')}-${String(ultimo).padStart(2,'0')}`;
     } else {
-      const mes = parseInt(document.getElementById('vencMesSo').value);
-      const ano = parseInt(document.getElementById('vencAnoSo').value);
-      if (!mes || !ano) {
-        toast('⚠ Preencha mês e ano', true);
-        return;
-      }
-      const ultimoDia = new Date(ano, mes, 0).getDate();
-      vencimento = `${String(ano).padStart(4,'0')}-${String(mes).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
+      const d = parseInt(document.getElementById('vencDia').value);
+      const m = parseInt(document.getElementById('vencMes').value);
+      const a = parseInt(document.getElementById('vencAno').value);
+      if (!d||!m||!a) { toast('Preencha dia, mês e ano!', true); return; }
+      if (m<1||m>12) { toast('Mês inválido!', true); return; }
+      if (d<1||d>31) { toast('Dia inválido!', true); return; }
+      const str = `${a}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if (!parseDateLocal(str)) { toast('Data inválida!', true); return; }
+      vencimento = str;
     }
   } else {
-    const dia = parseInt(document.getElementById('fabDia').value);
-    const mes = parseInt(document.getElementById('fabMes').value);
-    const ano = parseInt(document.getElementById('fabAno').value);
-    const meses = parseInt(document.getElementById('mesesVenc').value);
-    if (!dia || !mes || !ano || !meses) {
-      toast('⚠ Preencha todos os campos', true);
-      return;
-    }
-    const fab = new Date(ano, mes-1, dia);
-    fab.setMonth(fab.getMonth() + meses);
-    const d = String(fab.getDate()).padStart(2,'0');
-    const m = String(fab.getMonth()+1).padStart(2,'0');
-    const a = String(fab.getFullYear()).padStart(4,'0');
-    vencimento = `${a}-${m}-${d}`;
+    const fd=parseInt(document.getElementById('fabDia').value);
+    const fm=parseInt(document.getElementById('fabMes').value);
+    const fa=parseInt(document.getElementById('fabAno').value);
+    const ms=parseInt(document.getElementById('mesesVenc').value);
+    if (!fd||!fm||!fa||!ms) { toast('Preencha fabricação e meses!', true); return; }
+    const fab = new Date(fa, fm-1, fd); fab.setMonth(fab.getMonth()+ms);
+    vencimento = `${fab.getFullYear()}-${String(fab.getMonth()+1).padStart(2,'0')}-${String(fab.getDate()).padStart(2,'0')}`;
   }
-  const produto = {
-    id: gerarId(),
-    nome,
-    ean,
-    vencimento,
-    quantidade: qtd,
-    dataCadastro: new Date().toISOString(),
-    selecionado: false
-  };
-  produtos.push(produto);
-  document.getElementById('nomeProduto').value = '';
-  document.getElementById('codigoEAN').value = '';
-  document.getElementById('qtdProduto').value = '';
-  document.getElementById('vencDia').value = '';
-  document.getElementById('vencMes').value = '';
-  document.getElementById('vencAno').value = '';
-  document.getElementById('vencMesSo').value = '';
-  document.getElementById('vencAnoSo').value = '';
-  document.getElementById('fabDia').value = '';
-  document.getElementById('fabMes').value = '';
-  document.getElementById('fabAno').value = '';
-  document.getElementById('mesesVenc').value = '';
-  document.getElementById('eanStatus').style.display = 'none';
-  document.getElementById('nomeProduto').focus();
+
+  produtos.push({ id:gerarId(), nome, ean:ean||'—', vencimento, quantidade:qtd!==''?parseInt(qtd):null, selecionado:false });
+
+  ['nomeProduto','codigoEAN','vencDia','vencMes','vencAno','fabDia','fabMes',
+   'fabAno','mesesVenc','qtdProduto','vencMesSo','vencAnoSo'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('eanStatus').style.display='none';
+  document.getElementById('previewVencimento').style.display='none';
+
   salvar();
-  toast('✓ Produto adicionado!');
+  toast('✅ Produto adicionado!');
 }
 
-// ===================== RENDER LISTA =====================
-function renderLista() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  const container = document.getElementById('productList');
-  let filtered = produtos.filter(p => {
-    const matchSearch = p.nome.toLowerCase().includes(search) || p.ean.includes(search);
-    if (filterMode === 'todos') return matchSearch;
-    const dias = diasAte(p.vencimento);
-    if (filterMode === 'vencidos') return matchSearch && dias < 0;
-    if (filterMode === 'criticos') return matchSearch && dias >= 0 && dias <= 20;
-    if (filterMode === 'ok') return matchSearch && dias > 20;
-    return matchSearch;
-  });
-  filtered.sort((a, b) => {
-    if (sortMode === 'validade') {
-      return diasAte(a.vencimento) - diasAte(b.vencimento);
-    } else if (sortMode === 'nome') {
-      return a.nome.localeCompare(b.nome);
-    }
-  });
-  if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty"><div class="emoji">📭</div><p>Nenhum produto encontrado</p><small>Adicione um novo produto para começar</small></div>`;
-    return;
-  }
-  container.innerHTML = filtered.map(p => {
-    const dias = diasAte(p.vencimento);
-    const status = statusClass(dias);
-    const color = statusColor(dias);
-    const dataFormatada = formatarData(p.vencimento);
-    let diasTexto = '';
-    if (isNaN(dias)) {
-      diasTexto = 'Data inválida';
-    } else if (dias < 0) {
-      diasTexto = `Vencido há ${Math.abs(dias)} dias`;
-    } else if (dias === 0) {
-      diasTexto = 'Vence hoje!';
-    } else {
-      diasTexto = `Faltam ${dias} dias`;
-    }
-    return `
-      <div class="product-card ${status}" onclick="toggleSelect('${p.id}')">
-        <div class="card-header">
-          <div class="card-check"></div>
-          <div class="card-info">
-            <div class="card-name">${p.nome}</div>
-            <div class="card-ean">${p.ean || 'Sem EAN'}</div>
-          </div>
-          <button class="card-delete" onclick="deletarProduto('${p.id}', event)">🗑️</button>
-        </div>
-        <div class="card-stats">
-          <div class="stat-box">
-            <div class="label">Validade</div>
-            <div class="value">${dataFormatada}</div>
-          </div>
-          <div class="stat-box">
-            <div class="label">Status</div>
-            <div class="value ${color}">${diasTexto}</div>
-          </div>
-        </div>
-        ${p.quantidade > 1 ? `<div class="stat-box" style="grid-column: 1 / -1;"><div class="label">Quantidade</div><div class="value">${p.quantidade} unidades</div></div>` : ''}
-      </div>
-    `;
-  }).join('');
-  updateSelectionCount();
-}
-
-function toggleSelect(id) {
-  const produto = produtos.find(p => p.id === id);
-  if (produto) {
-    produto.selecionado = !produto.selecionado;
-    renderLista();
-    updateSelectionCount();
-  }
-}
-
-function toggleAll(checkbox) {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  produtos.forEach(p => {
-    const matchSearch = p.nome.toLowerCase().includes(search) || p.ean.includes(search);
-    if (matchSearch) {
-      if (filterMode === 'todos') p.selecionado = checkbox.checked;
-      else {
-        const dias = diasAte(p.vencimento);
-        if (filterMode === 'vencidos' && dias < 0) p.selecionado = checkbox.checked;
-        else if (filterMode === 'criticos' && dias >= 0 && dias <= 20) p.selecionado = checkbox.checked;
-        else if (filterMode === 'ok' && dias > 20) p.selecionado = checkbox.checked;
-      }
-    }
-  });
-  renderLista();
-}
-
-function deletarProduto(id, event) {
-  event.stopPropagation();
-  const produto = produtos.find(p => p.id === id);
-  if (!confirm(`Deletar "${produto.nome}"?`)) return;
-  produtos = produtos.filter(p => p.id !== id);
-  salvar();
-  toast('✓ Produto removido');
-}
-
+// ── LISTA ──────────────────────────────────────────────────────────────────────
 function setSort(mode) {
   sortMode = mode;
-  document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
-  document.getElementById('sort-' + mode).classList.add('active');
+  document.querySelectorAll('[id^="sort-"]').forEach(e=>e.classList.remove('active'));
+  document.getElementById('sort-'+mode).classList.add('active');
   renderLista();
 }
-
 function setFilter(mode) {
   filterMode = mode;
-  document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
-  document.getElementById('filter-' + mode).classList.add('active');
-  document.getElementById('checkAll').checked = false;
+  document.querySelectorAll('[id^="filter-"]').forEach(e=>e.classList.remove('active'));
+  document.getElementById('filter-'+mode).classList.add('active');
   renderLista();
 }
+function toggleAll(cb) {
+  getVisibleProdutos().forEach(p => { const x=produtos.find(q=>q.id===p.id); if(x) x.selecionado=cb.checked; });
+  salvar();
+}
+function toggleSelect(id) {
+  const p=produtos.find(x=>x.id===id); if(p){ p.selecionado=!p.selecionado; salvar(); }
+}
+function deletar(id) {
+  if(!confirm('Remover este produto?')) return;
+  produtos=produtos.filter(p=>p.id!==id); salvar(); toast('🗑️ Produto removido');
+}
+function atualizarQtd(id, valor) {
+  const p=produtos.find(x=>x.id===id); if(!p) return;
+  p.quantidade = valor===''?null:parseInt(valor); salvar();
+}
 
-function updateSelectionCount() {
-  const count = produtos.filter(p => p.selecionado).length;
-  document.getElementById('selCount').textContent = `${count} selecionado${count !== 1 ? 's' : ''}`;
+function getVisibleProdutos() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let lista = [...produtos];
+  if (q) lista = lista.filter(p => p.nome.toLowerCase().includes(q) || p.ean.toLowerCase().includes(q));
+  if (filterMode==='vencidos')  lista=lista.filter(p=>{ const d=diasAte(p.vencimento); return d!==null&&d<0; });
+  else if (filterMode==='criticos') lista=lista.filter(p=>{ const d=diasAte(p.vencimento); return d!==null&&d>=0&&d<=20; });
+  else if (filterMode==='ok')   lista=lista.filter(p=>{ const d=diasAte(p.vencimento); return d!==null&&d>20; });
+  if (sortMode==='validade') lista.sort((a,b)=>(diasAte(a.vencimento)??9999)-(diasAte(b.vencimento)??9999));
+  else lista.sort((a,b)=>a.nome.localeCompare(b.nome));
+  return lista;
 }
 
 function updateSummary() {
-  const vencidos = produtos.filter(p => diasAte(p.vencimento) < 0).length;
-  const criticos = produtos.filter(p => {
-    const dias = diasAte(p.vencimento);
-    return dias >= 0 && dias <= 20;
-  }).length;
-  const ok = produtos.filter(p => diasAte(p.vencimento) > 20).length;
-  document.getElementById('sumVencido').textContent = vencidos;
-  document.getElementById('sumCritico').textContent = criticos;
-  document.getElementById('sumOk').textContent = ok;
+  document.getElementById('sumVencido').textContent = produtos.filter(p=>{ const d=diasAte(p.vencimento); return d!==null&&d<0; }).length;
+  document.getElementById('sumCritico').textContent = produtos.filter(p=>{ const d=diasAte(p.vencimento); return d!==null&&d>=0&&d<=20; }).length;
+  document.getElementById('sumOk').textContent      = produtos.filter(p=>{ const d=diasAte(p.vencimento); return d!==null&&d>20; }).length;
 }
 
-// ===================== EXPORT =====================
+function renderLista() {
+  const lista = getVisibleProdutos();
+  const sel   = produtos.filter(p=>p.selecionado).length;
+  document.getElementById('selCount').textContent = sel+' selecionados';
+  document.getElementById('checkAll').checked = lista.length>0 && lista.every(p=>p.selecionado);
+
+  const container = document.getElementById('productList');
+  if (lista.length===0) {
+    container.innerHTML=`<div class="empty"><span class="emoji">📭</span><p>Nenhum produto encontrado</p><small>Cadastre produtos ou ajuste o filtro</small></div>`;
+    return;
+  }
+
+  container.innerHTML = lista.map(p => {
+    const dias = diasAte(p.vencimento);
+    const cls  = statusClass(dias);
+    const cor  = statusColor(dias);
+    let diasLabel;
+    if (dias===null)   diasLabel=`<span class="value muted">Data inválida</span>`;
+    else if (dias<0)   diasLabel=`<span class="value danger">VENCIDO há ${Math.abs(dias)}d</span>`;
+    else if (dias===0) diasLabel=`<span class="value danger">VENCE HOJE</span>`;
+    else               diasLabel=`<span class="value ${cor}">${dias} dias</span>`;
+
+    return `<div class="product-card ${cls} ${p.selecionado?'selected':''}">
+      <div class="card-header">
+        <div class="card-check" onclick="toggleSelect('${p.id}')"></div>
+        <div class="card-info">
+          <div class="card-name">${p.nome}</div>
+          <div class="card-ean">EAN: ${p.ean}</div>
+        </div>
+        <button class="card-delete" onclick="event.stopPropagation();deletar('${p.id}')">🗑</button>
+      </div>
+      <div class="card-stats">
+        <div class="stat-box"><div class="label">Validade</div><div class="value">${formatarData(p.vencimento)}</div></div>
+        <div class="stat-box"><div class="label">Faltam</div>${diasLabel}</div>
+        <div class="stat-box"><div class="label">Qtd</div>
+          <input type="number" class="qty-input"
+            value="${p.quantidade!==null&&p.quantidade!==undefined?p.quantidade:''}"
+            placeholder="—" min="0" inputmode="numeric"
+            onchange="atualizarQtd('${p.id}',this.value)"
+            onclick="event.stopPropagation()">
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateExportCount();
+}
+
+// ── EXPORT ─────────────────────────────────────────────────────────────────────
 function updateExportCount() {
-  const count = produtos.filter(p => p.selecionado).length;
-  document.getElementById('exportSelCount').textContent = `${count} produto(s)`;
+  const n=produtos.filter(p=>p.selecionado).length;
+  const el=document.getElementById('exportSelCount');
+  if(el) el.innerHTML=`<strong>${n} produto(s)</strong> selecionado(s).`;
+}
+
+function _diasStr(dias) {
+  if(dias===null) return 'INVÁLIDA';
+  if(dias<0) return `VENCIDO(${Math.abs(dias)}d)`;
+  if(dias===0) return 'HOJE';
+  return `${dias}d`;
 }
 
 function updateExportPreview() {
-  const selecionados = produtos.filter(p => p.selecionado);
-  if (selecionados.length === 0) {
-    document.getElementById('exportPreview').textContent = 'Nenhum produto selecionado';
-    return;
-  }
-  let preview = 'COD | PRODUTO | VALIDADE | FALTAM\n';
-  preview += ''.padEnd(60, '-') + '\n';
-  selecionados.forEach(p => {
-    const dias = diasAte(p.vencimento);
-    let diasTexto = isNaN(dias) ? 'INVÁLIDA' : (dias < 0 ? `VENCIDO (${Math.abs(dias)}d)` : `${dias}d`);
-    preview += `${p.ean || 'S/EAN'} | ${p.nome.padEnd(20)} | ${formatarData(p.vencimento)} | ${diasTexto}\n`;
+  const sels=produtos.filter(p=>p.selecionado);
+  const prev=document.getElementById('exportPreview');
+  if(sels.length===0){ prev.textContent='Nenhum produto selecionado.'; return; }
+  const linhas=['COD | PRODUTO | VALIDADE | QTD | FALTAM','─'.repeat(55)];
+  sels.forEach(p=>{
+    const qtd=p.quantidade!=null?p.quantidade:'—';
+    linhas.push(`${p.ean} | ${p.nome} | ${formatarData(p.vencimento)} | ${qtd} | ${_diasStr(diasAte(p.vencimento))}`);
   });
-  document.getElementById('exportPreview').textContent = preview;
+  prev.textContent=linhas.join('\n');
+  updateExportCount();
 }
 
 function exportarExcel() {
-  const selecionados = produtos.filter(p => p.selecionado);
-  if (selecionados.length === 0) {
-    toast('⚠ Selecione ao menos um produto', true);
-    return;
-  }
-  const dados = selecionados.map(p => ({
-    'COD': p.ean || 'S/EAN',
-    'PRODUTO': p.nome,
-    'VALIDADE': formatarData(p.vencimento),
-    'FALTAM': (() => {
-      const dias = diasAte(p.vencimento);
-      return isNaN(dias) ? 'INVÁLIDA' : (dias < 0 ? `VENCIDO (${Math.abs(dias)}d)` : `${dias}d`);
-    })(),
-    'QUANTIDADE': p.quantidade
-  }));
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(dados);
-  XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
-  XLSX.writeFile(wb, `validades_${new Date().toISOString().slice(0,10)}.xlsx`);
+  const sels=produtos.filter(p=>p.selecionado);
+  if(sels.length===0){ toast('Selecione ao menos um produto!',true); return; }
+  const data=sels.map(p=>{
+    const dias=diasAte(p.vencimento);
+    return { 'COD (EAN)':p.ean,'Produto':p.nome,'Validade':formatarData(p.vencimento),
+      'Quantidade':p.quantidade!=null?p.quantidade:'',
+      'Faltam':_diasStr(dias), 'Status':dias===null?'?':dias<0?'VENCIDO':dias<=20?'CRÍTICO':'OK' };
+  });
+  const wb=XLSX.utils.book_new(), ws=XLSX.utils.json_to_sheet(data);
+  ws['!cols']=[{wch:16},{wch:32},{wch:14},{wch:10},{wch:18},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws,'Validades');
+  XLSX.writeFile(wb,`validades_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('📊 Excel exportado!');
 }
 
 function exportarWhatsApp() {
-  const selecionados = produtos.filter(p => p.selecionado);
-  if (selecionados.length === 0) {
-    toast('⚠ Selecione ao menos um produto', true);
-    return;
-  }
-  let mensagem = '*📦 CONTROLE DE VALIDADE*\n\n';
-  selecionados.forEach(p => {
-    const dias = diasAte(p.vencimento);
-    let status = isNaN(dias) ? '⚠️ INVÁLIDA' : (dias < 0 ? '🔴 VENCIDO' : (dias <= 20 ? '🟠 CRÍTICO' : '🟢 OK'));
-    mensagem += `${status} | ${p.nome}\n`;
-    mensagem += `  📅 ${formatarData(p.vencimento)} | ${dias < 0 ? `Vencido há ${Math.abs(dias)}d` : dias <= 20 ? `Faltam ${dias}d` : `${dias}d`}\n`;
-    if (p.quantidade > 1) mensagem += `  📦 Qtd: ${p.quantidade}\n`;
-    mensagem += '\n';
+  const sels=produtos.filter(p=>p.selecionado);
+  if(sels.length===0){ toast('Selecione ao menos um produto!',true); return; }
+  const linhas=['*📦 CONTROLE DE VALIDADES*',`_${new Date().toLocaleDateString('pt-BR')}_`,'',
+    '*COD EAN | PRODUTO | VALIDADE | QTD | FALTAM*','━'.repeat(38)];
+  sels.forEach(p=>{
+    const dias=diasAte(p.vencimento);
+    const dt=dias===null?'⚠️ INVÁLIDA':dias<0?`⛔ VENCIDO(${Math.abs(dias)}d)`:dias===0?'⚠️ HOJE':dias<=20?`🟠 ${dias}d`:`✅ ${dias}d`;
+    linhas.push(`${p.ean} | ${p.nome} | ${formatarData(p.vencimento)} | ${p.quantidade!=null?p.quantidade:'—'} | ${dt}`);
   });
-  const encoded = encodeURIComponent(mensagem);
-  window.open(`https://wa.me/?text=${encoded}`, '_blank');
-  toast('💬 WhatsApp aberto!');
+  linhas.push('',`_Total: ${sels.length} produto(s)_`);
+  window.open(`https://wa.me/?text=${encodeURIComponent(linhas.join('\n'))}`,'_blank');
 }
 
 function exportarTexto() {
-  const selecionados = produtos.filter(p => p.selecionado);
-  if (selecionados.length === 0) {
-    toast('⚠ Selecione ao menos um produto', true);
-    return;
-  }
-  let texto = 'COD | PRODUTO | VALIDADE | FALTAM\n';
-  texto += ''.padEnd(60, '-') + '\n';
-  selecionados.forEach(p => {
-    const dias = diasAte(p.vencimento);
-    let diasTexto = isNaN(dias) ? 'INVÁLIDA' : (dias < 0 ? `VENCIDO (${Math.abs(dias)}d)` : `${dias}d`);
-    texto += `${p.ean || 'S/EAN'} | ${p.nome.padEnd(20)} | ${formatarData(p.vencimento)} | ${diasTexto}\n`;
-  });
-  navigator.clipboard.writeText(texto).then(() => {
-    toast('✓ Copiado para área de transferência!');
-  });
+  const sels=produtos.filter(p=>p.selecionado);
+  if(sels.length===0){ toast('Selecione ao menos um produto!',true); return; }
+  const linhas=['COD | PRODUTO | VALIDADE | QTD | FALTAM','─'.repeat(55)];
+  sels.forEach(p=>{ linhas.push(`${p.ean} | ${p.nome} | ${formatarData(p.vencimento)} | ${p.quantidade!=null?p.quantidade:'—'} | ${_diasStr(diasAte(p.vencimento))}`); });
+  const texto=linhas.join('\n');
+  if(navigator.clipboard) navigator.clipboard.writeText(texto).then(()=>toast('📋 Copiado!')).catch(()=>fbCopy(texto));
+  else fbCopy(texto);
 }
 
-// ===================== INIT =====================
-window.addEventListener('load', () => {
-  renderLista();
-  updateSummary();
-  updateExportCount();
-  updateBackupStatus();
-  updateBackupIndicator();
-  document.getElementById('totalCount').textContent = produtos.length;
+function fbCopy(t) {
+  const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta); toast('📋 Copiado!');
+}
+
+// ── BACKUP ─────────────────────────────────────────────────────────────────────
+function updateBackupStatus() {
+  document.getElementById('backupProductCount').textContent=produtos.length;
+  document.getElementById('lastBackupTime').textContent=localStorage.getItem('validades_lastBackup')||'Nunca';
+}
+
+function baixarBackup() {
+  const backup={versao:'2.1',dataBackup:new Date().toISOString(),totalProdutos:produtos.length,produtos};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download=`validades_backup_${new Date().toISOString().replace(/[:.]/g,'-').slice(0,16)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  localStorage.setItem('validades_lastBackup',new Date().toLocaleString('pt-BR'));
+  updateBackupStatus(); toast('📥 Backup baixado!');
+}
+
+function restaurarBackup(event) {
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try {
+      const data=JSON.parse(e.target.result);
+      if(!data.produtos||!Array.isArray(data.produtos)){ toast('Arquivo inválido!',true); return; }
+      if(!confirm(`Restaurar ${data.produtos.length} produto(s)? Os dados atuais serão substituídos.`)) return;
+      produtos=migrarProdutos(data.produtos);
+      localStorage.setItem('validades_produtos',JSON.stringify(produtos));
+      localStorage.setItem('validades_lastBackup',new Date().toLocaleString('pt-BR'));
+      salvar(); toast(`✅ ${produtos.length} produto(s) restaurados!`);
+    } catch { toast('Erro ao ler arquivo!',true); }
+  };
+  reader.readAsText(file); event.target.value='';
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  updateSummary(); renderLista(); updateBackupStatus();
+  document.getElementById('totalCount').textContent=produtos.length;
 });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeCamera(); });
 </script>
 </body>
 </html>
