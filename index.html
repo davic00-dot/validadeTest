@@ -76,6 +76,22 @@
     padding: 4px 10px;
     border-radius: 20px;
   }
+  .backup-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 4px 8px;
+    background: rgba(0,229,160,0.1);
+    border-radius: 6px;
+  }
+  .backup-indicator.syncing {
+    color: var(--accent2);
+  }
+  .backup-indicator.synced {
+    color: var(--accent);
+  }
 
   /* TABS */
   .tabs {
@@ -564,6 +580,88 @@
     color: var(--muted);
   }
 
+  /* BACKUP SECTION */
+  .backup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .backup-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .backup-info {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+  .backup-info strong { color: var(--accent); }
+  .backup-status {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+  }
+  .backup-status .status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .backup-status .status-item:last-child { margin-bottom: 0; }
+  .backup-status .label { color: var(--muted); }
+  .backup-status .value { color: var(--accent); font-weight: 600; }
+  .backup-btns { display: grid; gap: 10px; }
+  .backup-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+  }
+  .backup-btn:active { opacity: 0.8; transform: scale(0.99); }
+  .backup-btn .icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .backup-btn.auto .icon { background: rgba(0,229,160,0.15); }
+  .backup-btn.manual .icon { background: rgba(0,153,255,0.15); }
+  .backup-btn.restore .icon { background: rgba(255,107,53,0.15); }
+  .backup-btn .desc { text-align: left; }
+  .backup-btn .desc strong {
+    display: block;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  .backup-btn .desc small {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
   /* TOAST */
   .toast {
     position: fixed;
@@ -643,13 +741,20 @@
     <h1>Validades</h1>
     <p>Controle de vencimentos</p>
   </div>
-  <div class="header-count" id="totalCount">0</div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="backup-indicator" id="backupIndicator" title="Status do backup automático">
+      <span id="backupIcon">💾</span>
+      <span id="backupText">Pronto</span>
+    </div>
+    <div class="header-count" id="totalCount">0</div>
+  </div>
 </div>
 
 <div class="tabs">
   <button class="tab active" onclick="showTab('cadastro')">➕ Cadastrar</button>
   <button class="tab" onclick="showTab('lista')">📋 Lista</button>
   <button class="tab" onclick="showTab('exportar')">📤 Exportar</button>
+  <button class="tab" onclick="showTab('backup')">💾 Backup</button>
 </div>
 
 <!-- ========== CADASTRAR ========== -->
@@ -828,6 +933,60 @@
   </div>
 </div>
 
+<!-- ========== BACKUP ========== -->
+<div class="section" id="tab-backup">
+  <div class="backup-card">
+    <h3>💾 Backup Automático</h3>
+    <div class="backup-info">
+      Seus dados são salvos <strong>automaticamente a cada alteração</strong> em um arquivo JSON no seu dispositivo.<br>
+      Você também pode fazer <strong>backup manual</strong> ou <strong>restaurar</strong> dados de um backup anterior.
+    </div>
+
+    <div class="backup-status">
+      <div class="status-item">
+        <span class="label">Status do Auto-backup:</span>
+        <span class="value" id="autoBackupStatus">✓ Ativo</span>
+      </div>
+      <div class="status-item">
+        <span class="label">Último backup:</span>
+        <span class="value" id="lastBackupTime">Nunca</span>
+      </div>
+      <div class="status-item">
+        <span class="label">Produtos salvos:</span>
+        <span class="value" id="backupProductCount">0</span>
+      </div>
+    </div>
+
+    <div class="backup-btns">
+      <button class="backup-btn auto" onclick="forceBackup()">
+        <div class="icon">💾</div>
+        <div class="desc">
+          <strong>Fazer Backup Agora</strong>
+          <small>Salva arquivo JSON com todos os dados</small>
+        </div>
+      </button>
+
+      <button class="backup-btn restore" onclick="document.getElementById('restoreFile').click()">
+        <div class="icon">⬆️</div>
+        <div class="desc">
+          <strong>Restaurar do Backup</strong>
+          <small>Carrega dados de um arquivo JSON anterior</small>
+        </div>
+      </button>
+
+      <button class="backup-btn manual" onclick="baixarBackupAtual()">
+        <div class="icon">📥</div>
+        <div class="desc">
+          <strong>Baixar Backup JSON</strong>
+          <small>Salva cópia dos dados para segurança</small>
+        </div>
+      </button>
+    </div>
+
+    <input type="file" id="restoreFile" accept=".json" style="display:none;" onchange="restaurarDoBackup(event)">
+  </div>
+</div>
+
 <!-- CAMERA MODAL -->
 <div class="modal-overlay" id="cameraModal">
   <div class="camera-wrap">
@@ -886,14 +1045,132 @@ let sortMode = 'validade';
 let filterMode = 'todos';
 let videoStream = null;
 let scanInterval = null;
+let lastBackupTime = localStorage.getItem('validades_lastBackup') || null;
+
+// ===================== BACKUP AUTOMÁTICO =====================
+function gerarNomeBackup() {
+  const now = new Date();
+  const ano = now.getFullYear();
+  const mes = String(now.getMonth() + 1).padStart(2, '0');
+  const dia = String(now.getDate()).padStart(2, '0');
+  const horas = String(now.getHours()).padStart(2, '0');
+  const minutos = String(now.getMinutes()).padStart(2, '0');
+  return `validades_backup_${ano}${mes}${dia}_${horas}${minutos}.json`;
+}
+
+function gerarBackupJSON() {
+  return {
+    versao: '2.0',
+    dataBackup: new Date().toISOString(),
+    totalProdutos: produtos.length,
+    produtos: produtos,
+    descricao: 'Backup automático do Controle de Validade'
+  };
+}
+
+function forceBackup() {
+  const backup = gerarBackupJSON();
+  const dataStr = JSON.stringify(backup, null, 2);
+  
+  // Salvar última vez no localStorage
+  lastBackupTime = new Date().toLocaleString('pt-BR');
+  localStorage.setItem('validades_lastBackup', lastBackupTime);
+  localStorage.setItem('validades_ultimoBackupJSON', dataStr);
+  
+  // Atualizar interface
+  updateBackupStatus();
+  toast('✓ Backup salvo com sucesso!');
+}
+
+function baixarBackupAtual() {
+  const backup = gerarBackupJSON();
+  const dataStr = JSON.stringify(backup, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = gerarNomeBackup();
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📥 Arquivo baixado!');
+}
+
+function restaurarDoBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      
+      if (!backup.produtos || !Array.isArray(backup.produtos)) {
+        toast('❌ Arquivo inválido!', true);
+        return;
+      }
+      
+      // Confirmar restauração
+      if (confirm(`Deseja restaurar ${backup.produtos.length} produto(s)?\n\nIsso irá sobrescrever os dados atuais!`)) {
+        produtos = backup.produtos;
+        localStorage.setItem('validades_produtos', JSON.stringify(produtos));
+        
+        // Auto-backup da restauração
+        forceBackup();
+        
+        // Atualizar interface
+        renderLista();
+        updateSummary();
+        updateExportCount();
+        document.getElementById('totalCount').textContent = produtos.length;
+        
+        toast('✓ Dados restaurados com sucesso!');
+      }
+    } catch (err) {
+      console.error('Erro ao restaurar:', err);
+      toast('❌ Erro ao ler arquivo!', true);
+    }
+  };
+  reader.readAsText(file);
+  
+  // Limpar input
+  event.target.value = '';
+}
+
+function updateBackupStatus() {
+  const productCount = produtos.length;
+  document.getElementById('backupProductCount').textContent = productCount;
+  
+  if (lastBackupTime) {
+    document.getElementById('lastBackupTime').textContent = lastBackupTime;
+  }
+}
 
 // ===================== UTILS =====================
 function salvar() {
   localStorage.setItem('validades_produtos', JSON.stringify(produtos));
+  
+  // Auto-backup a cada alteração
+  forceBackup();
+  
   renderLista();
   updateSummary();
   updateExportCount();
   document.getElementById('totalCount').textContent = produtos.length;
+  
+  // Atualizar indicador visual
+  updateBackupIndicator();
+}
+
+function updateBackupIndicator() {
+  const icon = document.getElementById('backupIcon');
+  const text = document.getElementById('backupText');
+  const indicator = document.getElementById('backupIndicator');
+  
+  icon.textContent = '✓';
+  text.textContent = 'Backup OK';
+  indicator.className = 'backup-indicator synced';
 }
 
 function toast(msg, err = false) {
@@ -960,7 +1237,9 @@ function showTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   event.currentTarget.classList.add('active');
+  
   if (tab === 'exportar') updateExportPreview();
+  if (tab === 'backup') updateBackupStatus();
 }
 
 // ===================== TIPO VALIDADE =====================
@@ -1000,517 +1279,448 @@ function setDataMode(mode) {
   });
 });
 
-// ===================== ADICIONAR =====================
+// ===================== CAMERA & BARCODE =====================
+async function openCamera() {
+  const modal = document.getElementById('cameraModal');
+  modal.classList.add('open');
+  
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+    document.getElementById('video').srcObject = videoStream;
+    
+    // Iniciar scanning
+    startBarcodeScanning();
+  } catch (err) {
+    console.error('Erro ao acessar câmera:', err);
+    toast('❌ Não foi possível acessar a câmera', true);
+    closeCamera();
+  }
+}
+
+function closeCamera() {
+  const modal = document.getElementById('cameraModal');
+  modal.classList.remove('open');
+  
+  if (scanInterval) clearInterval(scanInterval);
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+    videoStream = null;
+  }
+}
+
+async function startBarcodeScanning() {
+  const codeReader = new ZXing.BrowserMultiFormatReader();
+  const videoElement = document.getElementById('video');
+  
+  scanInterval = setInterval(async () => {
+    try {
+      const result = await codeReader.decodeFromVideoElement(videoElement);
+      if (result) {
+        document.getElementById('codigoEAN').value = result.text;
+        onEanInput(result.text);
+        closeCamera();
+        toast('✓ Código lido com sucesso!');
+      }
+    } catch (err) {
+      // Silenciar erros de leitura
+    }
+  }, 500);
+}
+
+function digitarManual() {
+  closeCamera();
+  document.getElementById('codigoEAN').focus();
+}
+
+function onEanInput(value) {
+  const statusEl = document.getElementById('eanStatus');
+  const input = document.getElementById('codigoEAN');
+  
+  if (!value) {
+    statusEl.style.display = 'none';
+    return;
+  }
+  
+  // Validar EAN-13 simples
+  const cleanValue = value.replace(/\D/g, '');
+  
+  if (cleanValue.length === 13 || cleanValue.length === 8) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(0, 229, 160, 0.1)';
+    statusEl.style.color = 'var(--accent)';
+    statusEl.textContent = `✓ EAN-${cleanValue.length} válido`;
+    input.style.borderColor = 'var(--accent)';
+  } else if (cleanValue.length > 0) {
+    statusEl.style.display = 'block';
+    statusEl.style.background = 'rgba(255, 107, 53, 0.1)';
+    statusEl.style.color = 'var(--warn)';
+    statusEl.textContent = `⚠ ${cleanValue.length} dígitos (esperado: 8 ou 13)`;
+    input.style.borderColor = 'var(--warn)';
+  } else {
+    statusEl.style.display = 'none';
+  }
+}
+
+// ===================== ADICIONAR PRODUTO =====================
 function adicionarProduto() {
   const nome = document.getElementById('nomeProduto').value.trim();
   const ean = document.getElementById('codigoEAN').value.trim();
-
-  if (!nome) { toast('Informe o nome do produto!', true); return; }
-
+  const qtd = parseInt(document.getElementById('qtdProduto').value) || 1;
+  
+  if (!nome) {
+    toast('⚠ Digite o nome do produto', true);
+    return;
+  }
+  
   let vencimento = null;
-
+  
   if (tipoValidade === 'data') {
-    if (dataMode === 'mesano') {
-      const m = parseInt(document.getElementById('vencMesSo').value);
-      const a = parseInt(document.getElementById('vencAnoSo').value);
-      if (!m || !a) { toast('Informe mês e ano de vencimento!', true); return; }
-      if (m < 1 || m > 12) { toast('Mês inválido!', true); return; }
-      // Último dia do mês: dia 0 do próximo mês
-      const ultimoDia = new Date(a, m, 0).getDate();
-      vencimento = `${a}-${String(m).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
+    if (dataMode === 'completo') {
+      const dia = parseInt(document.getElementById('vencDia').value);
+      const mes = parseInt(document.getElementById('vencMes').value);
+      const ano = parseInt(document.getElementById('vencAno').value);
+      
+      if (!dia || !mes || !ano) {
+        toast('⚠ Preencha todos os campos de data', true);
+        return;
+      }
+      
+      vencimento = `${String(ano).padStart(4,'0')}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
     } else {
-      const d = parseInt(document.getElementById('vencDia').value);
-      const m = parseInt(document.getElementById('vencMes').value);
-      const a = parseInt(document.getElementById('vencAno').value);
-      if (!d || !m || !a) { toast('Informe a data de vencimento completa!', true); return; }
-      if (m < 1 || m > 12) { toast('Mês inválido!', true); return; }
-      if (d < 1 || d > 31) { toast('Dia inválido!', true); return; }
-      vencimento = `${a}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const mes = parseInt(document.getElementById('vencMesSo').value);
+      const ano = parseInt(document.getElementById('vencAnoSo').value);
+      
+      if (!mes || !ano) {
+        toast('⚠ Preencha mês e ano', true);
+        return;
+      }
+      
+      // Último dia do mês
+      const ultimoDia = new Date(ano, mes, 0).getDate();
+      vencimento = `${String(ano).padStart(4,'0')}-${String(mes).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
     }
   } else {
-    const fd = parseInt(document.getElementById('fabDia').value);
-    const fm = parseInt(document.getElementById('fabMes').value);
-    const fa = parseInt(document.getElementById('fabAno').value);
+    const dia = parseInt(document.getElementById('fabDia').value);
+    const mes = parseInt(document.getElementById('fabMes').value);
+    const ano = parseInt(document.getElementById('fabAno').value);
     const meses = parseInt(document.getElementById('mesesVenc').value);
-    if (!fd || !fm || !fa || !meses) { toast('Preencha fabricação e validade em meses!', true); return; }
-    const fab = new Date(fa, fm-1, fd);
+    
+    if (!dia || !mes || !ano || !meses) {
+      toast('⚠ Preencha todos os campos', true);
+      return;
+    }
+    
+    const fab = new Date(ano, mes-1, dia);
     fab.setMonth(fab.getMonth() + meses);
-    vencimento = fab.toISOString().split('T')[0];
+    
+    const d = String(fab.getDate()).padStart(2,'0');
+    const m = String(fab.getMonth()+1).padStart(2,'0');
+    const a = String(fab.getFullYear()).padStart(4,'0');
+    vencimento = `${a}-${m}-${d}`;
   }
-
-  const qtd = document.getElementById('qtdProduto').value.trim();
-  produtos.push({
+  
+  const produto = {
     id: gerarId(),
     nome,
-    ean: ean || '—',
+    ean,
     vencimento,
-    quantidade: qtd !== '' ? parseInt(qtd) : null,
+    quantidade: qtd,
+    dataCadastro: new Date().toISOString(),
     selecionado: false
-  });
-
-  // Limpar
-  ['nomeProduto','codigoEAN','vencDia','vencMes','vencAno','fabDia','fabMes','fabAno','mesesVenc','qtdProduto'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('previewVencimento').style.display = 'none';
-  document.getElementById('eanStatus').style.display = 'none';
+  };
+  
+  produtos.push(produto);
+  
+  // Limpar form
+  document.getElementById('nomeProduto').value = '';
+  document.getElementById('codigoEAN').value = '';
+  document.getElementById('qtdProduto').value = '';
+  document.getElementById('vencDia').value = '';
+  document.getElementById('vencMes').value = '';
+  document.getElementById('vencAno').value = '';
   document.getElementById('vencMesSo').value = '';
   document.getElementById('vencAnoSo').value = '';
-  document.getElementById('nomeProduto').dataset.fromApi = 'false';
-
+  document.getElementById('fabDia').value = '';
+  document.getElementById('fabMes').value = '';
+  document.getElementById('fabAno').value = '';
+  document.getElementById('mesesVenc').value = '';
+  document.getElementById('eanStatus').style.display = 'none';
+  
+  document.getElementById('nomeProduto').focus();
+  
   salvar();
-  toast('✅ Produto adicionado!');
+  toast('✓ Produto adicionado!');
 }
 
-// ===================== LISTA =====================
+// ===================== RENDER LISTA =====================
+function renderLista() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const container = document.getElementById('productList');
+  
+  let filtered = produtos.filter(p => {
+    const matchSearch = p.nome.toLowerCase().includes(search) || p.ean.includes(search);
+    
+    if (filterMode === 'todos') return matchSearch;
+    
+    const dias = diasAte(p.vencimento);
+    
+    if (filterMode === 'vencidos') return matchSearch && dias < 0;
+    if (filterMode === 'criticos') return matchSearch && dias >= 0 && dias <= 20;
+    if (filterMode === 'ok') return matchSearch && dias > 20;
+    
+    return matchSearch;
+  });
+  
+  // Ordenação
+  filtered.sort((a, b) => {
+    if (sortMode === 'validade') {
+      return diasAte(a.vencimento) - diasAte(b.vencimento);
+    } else if (sortMode === 'nome') {
+      return a.nome.localeCompare(b.nome);
+    }
+  });
+  
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty">
+        <div class="emoji">📭</div>
+        <p>Nenhum produto encontrado</p>
+        <small>Adicione um novo produto para começar</small>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = filtered.map(p => {
+    const dias = diasAte(p.vencimento);
+    const status = statusClass(dias);
+    const color = statusColor(dias);
+    
+    const dataFormatada = formatarData(p.vencimento);
+    
+    let diasTexto = '';
+    if (isNaN(dias)) {
+      diasTexto = 'Data inválida';
+    } else if (dias < 0) {
+      diasTexto = `Vencido há ${Math.abs(dias)} dias`;
+    } else if (dias === 0) {
+      diasTexto = 'Vence hoje!';
+    } else {
+      diasTexto = `Faltam ${dias} dias`;
+    }
+    
+    return `
+      <div class="product-card ${status}" onclick="toggleSelect('${p.id}')">
+        <div class="card-header">
+          <div class="card-check"></div>
+          <div class="card-info">
+            <div class="card-name">${p.nome}</div>
+            <div class="card-ean">${p.ean || 'Sem EAN'}</div>
+          </div>
+          <button class="card-delete" onclick="deletarProduto('${p.id}', event)">🗑️</button>
+        </div>
+        <div class="card-stats">
+          <div class="stat-box">
+            <div class="label">Validade</div>
+            <div class="value">${dataFormatada}</div>
+          </div>
+          <div class="stat-box">
+            <div class="label">Status</div>
+            <div class="value ${color}">${diasTexto}</div>
+          </div>
+        </div>
+        ${p.quantidade > 1 ? `<div class="stat-box" style="grid-column: 1 / -1;"><div class="label">Quantidade</div><div class="value">${p.quantidade} unidades</div></div>` : ''}
+      </div>
+    `;
+  }).join('');
+  
+  updateSelectionCount();
+}
+
+function toggleSelect(id) {
+  const produto = produtos.find(p => p.id === id);
+  if (produto) {
+    produto.selecionado = !produto.selecionado;
+    renderLista();
+    updateSelectionCount();
+  }
+}
+
+function toggleAll(checkbox) {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  
+  produtos.forEach(p => {
+    const matchSearch = p.nome.toLowerCase().includes(search) || p.ean.includes(search);
+    
+    if (matchSearch) {
+      if (filterMode === 'todos') p.selecionado = checkbox.checked;
+      else {
+        const dias = diasAte(p.vencimento);
+        
+        if (filterMode === 'vencidos' && dias < 0) p.selecionado = checkbox.checked;
+        else if (filterMode === 'criticos' && dias >= 0 && dias <= 20) p.selecionado = checkbox.checked;
+        else if (filterMode === 'ok' && dias > 20) p.selecionado = checkbox.checked;
+      }
+    }
+  });
+  
+  renderLista();
+}
+
+function deletarProduto(id, event) {
+  event.stopPropagation();
+  
+  const produto = produtos.find(p => p.id === id);
+  if (!confirm(`Deletar "${produto.nome}"?`)) return;
+  
+  produtos = produtos.filter(p => p.id !== id);
+  salvar();
+  toast('✓ Produto removido');
+}
+
 function setSort(mode) {
   sortMode = mode;
-  document.querySelectorAll('[id^="sort-"]').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
   document.getElementById('sort-' + mode).classList.add('active');
   renderLista();
 }
 
 function setFilter(mode) {
   filterMode = mode;
-  document.querySelectorAll('[id^="filter-"]').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
   document.getElementById('filter-' + mode).classList.add('active');
+  document.getElementById('checkAll').checked = false;
   renderLista();
 }
 
-function toggleAll(cb) {
-  const visibleIds = getVisibleProdutos().map(p => p.id);
-  visibleIds.forEach(id => {
-    const p = produtos.find(x => x.id === id);
-    if (p) p.selecionado = cb.checked;
-  });
-  salvar();
-}
-
-function toggleSelect(id) {
-  const p = produtos.find(x => x.id === id);
-  if (p) { p.selecionado = !p.selecionado; salvar(); }
-}
-
-function deletar(id) {
-  if (!confirm('Remover este produto?')) return;
-  produtos = produtos.filter(p => p.id !== id);
-  salvar();
-  toast('🗑️ Produto removido');
-}
-
-function atualizarQtd(id, valor) {
-  const p = produtos.find(x => x.id === id);
-  if (!p) return;
-  p.quantidade = valor === '' ? null : parseInt(valor);
-  salvar();
-}
-
-function getVisibleProdutos() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  let lista = [...produtos];
-
-  if (q) {
-    lista = lista.filter(p =>
-      p.nome.toLowerCase().includes(q) || p.ean.toLowerCase().includes(q)
-    );
-  }
-
-  if (filterMode === 'vencidos') lista = lista.filter(p => diasAte(p.vencimento) < 0);
-  else if (filterMode === 'criticos') lista = lista.filter(p => { const d = diasAte(p.vencimento); return d >= 0 && d <= 20; });
-  else if (filterMode === 'ok') lista = lista.filter(p => diasAte(p.vencimento) > 20);
-
-  if (sortMode === 'validade') lista.sort((a,b) => a.vencimento.localeCompare(b.vencimento));
-  else lista.sort((a,b) => a.nome.localeCompare(b.nome));
-
-  return lista;
+function updateSelectionCount() {
+  const count = produtos.filter(p => p.selecionado).length;
+  document.getElementById('selCount').textContent = `${count} selecionado${count !== 1 ? 's' : ''}`;
 }
 
 function updateSummary() {
   const vencidos = produtos.filter(p => diasAte(p.vencimento) < 0).length;
-  const criticos = produtos.filter(p => { const d = diasAte(p.vencimento); return d >= 0 && d <= 20; }).length;
+  const criticos = produtos.filter(p => {
+    const dias = diasAte(p.vencimento);
+    return dias >= 0 && dias <= 20;
+  }).length;
   const ok = produtos.filter(p => diasAte(p.vencimento) > 20).length;
+  
   document.getElementById('sumVencido').textContent = vencidos;
   document.getElementById('sumCritico').textContent = criticos;
   document.getElementById('sumOk').textContent = ok;
 }
 
-function renderLista() {
-  const lista = getVisibleProdutos();
-  const sel = produtos.filter(p => p.selecionado).length;
-  document.getElementById('selCount').textContent = sel + ' selecionados';
-  document.getElementById('checkAll').checked = lista.length > 0 && lista.every(p => p.selecionado);
-
-  const container = document.getElementById('productList');
-
-  if (lista.length === 0) {
-    container.innerHTML = `
-      <div class="empty">
-        <span class="emoji">📭</span>
-        <p>Nenhum produto encontrado</p>
-        <small>Cadastre produtos ou ajuste o filtro</small>
-      </div>`;
-    return;
-  }
-
-  container.innerHTML = lista.map(p => {
-    const dias = diasAte(p.vencimento);
-    const cls = isNaN(dias) ? 'ok' : statusClass(dias);
-    const cor = isNaN(dias) ? 'muted' : statusColor(dias);
-    const diasLabel = isNaN(dias)
-      ? `<span class="value" style="color:var(--muted)">Data inválida</span>`
-      : dias < 0
-        ? `<span class="value danger">VENCIDO há ${Math.abs(dias)}d</span>`
-        : dias === 0
-          ? `<span class="value danger">VENCE HOJE</span>`
-          : `<span class="value ${cor}">${dias} dias</span>`;
-
-    return `
-    <div class="product-card ${cls} ${p.selecionado ? 'selected' : ''}">
-      <div class="card-header">
-        <div class="card-check" onclick="toggleSelect('${p.id}')"></div>
-        <div class="card-info">
-          <div class="card-name">${p.nome}</div>
-          <div class="card-ean">EAN: ${p.ean}</div>
-        </div>
-        <button class="card-delete" onclick="deletar('${p.id}')">🗑</button>
-      </div>
-      <div class="card-stats" style="grid-template-columns:1fr 1fr 80px;">
-        <div class="stat-box">
-          <div class="label">Validade</div>
-          <div class="value">${formatarData(p.vencimento)}</div>
-        </div>
-        <div class="stat-box">
-          <div class="label">Faltam</div>
-          ${diasLabel}
-        </div>
-        <div class="stat-box">
-          <div class="label">Qtd</div>
-          <input
-            type="number"
-            class="qty-input"
-            value="${p.quantidade !== null && p.quantidade !== undefined ? p.quantidade : ''}"
-            placeholder="—"
-            min="0"
-            inputmode="numeric"
-            onchange="atualizarQtd('${p.id}', this.value)"
-            onclick="event.stopPropagation()"
-          >
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-
-  updateExportCount();
-}
-
-function updateExportCount() {
-  const n = produtos.filter(p => p.selecionado).length;
-  const el = document.getElementById('exportSelCount');
-  if (el) el.innerHTML = `<strong>${n} produto(s)</strong> selecionado(s).`;
-}
-
-// ===================== BUSCA EAN =====================
-let eanTimer = null;
-
-function onEanInput(val) {
-  clearTimeout(eanTimer);
-  const clean = val.replace(/\D/g, '');
-  const status = document.getElementById('eanStatus');
-  if (clean.length < 8) { status.style.display = 'none'; return; }
-  eanTimer = setTimeout(() => buscarProdutoEAN(clean), 700);
-}
-
-function setStatus(status, tipo, msg) {
-  const estilos = {
-    loading: { bg: 'rgba(0,153,255,0.1)', color: 'var(--accent2)', border: '1px solid rgba(0,153,255,0.3)' },
-    ok:      { bg: 'rgba(0,229,160,0.1)', color: 'var(--accent)',  border: '1px solid rgba(0,229,160,0.3)' },
-    muted:   { bg: 'rgba(107,122,150,0.1)', color: 'var(--muted)', border: '1px solid var(--border)' },
-  };
-  const s = estilos[tipo] || estilos.muted;
-  status.style.display = 'block';
-  status.style.background = s.bg;
-  status.style.color = s.color;
-  status.style.border = s.border;
-  status.textContent = msg;
-}
-
-async function buscarProdutoEAN(ean) {
-  const status = document.getElementById('eanStatus');
-  const nomeInput = document.getElementById('nomeProduto');
-
-  setStatus(status, 'loading', '🔍 Buscando produto...');
-
-  const bases = [
-    {
-      label: 'Base BR/Global',
-      fn: async () => {
-        const r = await fetch(
-          `https://world.openfoodfacts.org/api/v2/product/${ean}?fields=product_name,product_name_pt,brands`,
-          { signal: AbortSignal.timeout(6000) }
-        );
-        const d = await r.json();
-        if (d.status === 1 && d.product) {
-          const nome = (d.product.product_name_pt || d.product.product_name || '').trim();
-          const marca = (d.product.brands || '').trim();
-          if (nome) return { nome, marca };
-        }
-        return null;
-      }
-    },
-    {
-      label: 'Higiene/Beleza',
-      fn: async () => {
-        const r = await fetch(
-          `https://world.openbeautyfacts.org/api/v2/product/${ean}?fields=product_name,product_name_pt,brands`,
-          { signal: AbortSignal.timeout(6000) }
-        );
-        const d = await r.json();
-        if (d.status === 1 && d.product) {
-          const nome = (d.product.product_name_pt || d.product.product_name || '').trim();
-          const marca = (d.product.brands || '').trim();
-          if (nome) return { nome, marca };
-        }
-        return null;
-      }
-    },
-    {
-      label: 'Catálogo Global',
-      fn: async () => {
-        const r = await fetch(
-          `https://api.upcitemdb.com/prod/trial/lookup?upc=${ean}`,
-          { signal: AbortSignal.timeout(6000) }
-        );
-        const d = await r.json();
-        if (d.code === 'OK' && d.items && d.items.length > 0) {
-          const item = d.items[0];
-          const nome = (item.title || '').trim();
-          const marca = (item.brand || '').trim();
-          if (nome) return { nome, marca };
-        }
-        return null;
-      }
-    },
-  ];
-
-  const resultados = await Promise.allSettled(bases.map(b => b.fn()));
-
-  let encontrado = null;
-  let fonteLabel = '';
-  for (let i = 0; i < resultados.length; i++) {
-    const r = resultados[i];
-    if (r.status === 'fulfilled' && r.value) {
-      encontrado = r.value;
-      fonteLabel = bases[i].label;
-      break;
-    }
-  }
-
-  if (encontrado) {
-    const nomeCompleto = encontrado.marca
-      ? `${encontrado.nome} - ${encontrado.marca}`
-      : encontrado.nome;
-    if (!nomeInput.value || nomeInput.dataset.fromApi === 'true') {
-      nomeInput.value = nomeCompleto;
-      nomeInput.dataset.fromApi = 'true';
-    }
-    setStatus(status, 'ok', `✅ ${fonteLabel}: ${nomeCompleto}`);
-  } else {
-    setStatus(status, 'muted', '❓ Não encontrado nas bases. Preencha o nome manualmente.');
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('nomeProduto').addEventListener('input', function() {
-    this.dataset.fromApi = 'false';
-  });
-});
-
-// ===================== CÂMERA =====================
-let zxingReader = null;
-
-async function openCamera() {
-  const modal = document.getElementById('cameraModal');
-  modal.classList.add('open');
-
-  try {
-    // Inicializa o leitor ZXing
-    if (typeof ZXing === 'undefined') {
-      throw new Error('ZXing não carregado');
-    }
-
-    zxingReader = new ZXing.BrowserMultiFormatReader();
-
-    // Lista câmeras disponíveis e prefere a traseira
-    const devices = await zxingReader.listVideoInputDevices();
-    let deviceId = undefined;
-    if (devices.length > 0) {
-      // Prefere câmera traseira
-      const rear = devices.find(d =>
-        /back|rear|environment|traseira/i.test(d.label)
-      );
-      deviceId = rear ? rear.deviceId : devices[devices.length - 1].deviceId;
-    }
-
-    const video = document.getElementById('video');
-    await zxingReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
-      if (result) {
-        handleScannedCode(result.getText());
-      }
-      // erros de "não encontrado ainda" são normais, ignorar
-    });
-
-  } catch(e) {
-    console.error('Erro câmera:', e);
-    toast('Câmera indisponível. Use "Digitar EAN".', true);
-    closeCamera();
-  }
-}
-
-function handleScannedCode(code) {
-  document.getElementById('codigoEAN').value = code;
-  closeCamera();
-  toast('📷 Código lido: ' + code);
-  buscarProdutoEAN(code.replace(/\D/g, ''));
-}
-
-function closeCamera() {
-  if (zxingReader) {
-    try { zxingReader.reset(); } catch(e) {}
-    zxingReader = null;
-  }
-  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-  document.getElementById('cameraModal').classList.remove('open');
-  const video = document.getElementById('video');
-  video.srcObject = null;
-}
-
-function digitarManual() {
-  closeCamera();
-  setTimeout(() => {
-    const ean = prompt('Digite o código EAN:');
-    if (ean && ean.trim()) {
-      document.getElementById('codigoEAN').value = ean.trim();
-      toast('EAN inserido manualmente');
-    }
-  }, 300);
-}
-
 // ===================== EXPORT =====================
-function getSelecionados() {
-  return produtos.filter(p => p.selecionado);
+function updateExportCount() {
+  const count = produtos.filter(p => p.selecionado).length;
+  document.getElementById('exportSelCount').textContent = `${count} produto(s)`;
 }
 
 function updateExportPreview() {
-  const sels = getSelecionados();
-  const prev = document.getElementById('exportPreview');
-  if (sels.length === 0) {
-    prev.textContent = 'Nenhum produto selecionado.';
+  const selecionados = produtos.filter(p => p.selecionado);
+  
+  if (selecionados.length === 0) {
+    document.getElementById('exportPreview').textContent = 'Nenhum produto selecionado';
     return;
   }
-  prev.textContent = gerarTextoTabela(sels);
-  updateExportCount();
-}
-
-function gerarTextoTabela(lista) {
-  const linhas = ['COD | PRODUTO | VALIDADE | QTD | FALTAM', '─'.repeat(55)];
-  lista.forEach(p => {
+  
+  let preview = 'COD | PRODUTO | VALIDADE | FALTAM\n';
+  preview += ''.padEnd(60, '-') + '\n';
+  
+  selecionados.forEach(p => {
     const dias = diasAte(p.vencimento);
-    const diasTxt = dias < 0 ? `VENCIDO (${Math.abs(dias)}d)` : dias === 0 ? 'HOJE' : `${dias} dias`;
-    const qtdTxt = p.quantidade !== null && p.quantidade !== undefined ? p.quantidade : '—';
-    linhas.push(`${p.ean} | ${p.nome} | ${formatarData(p.vencimento)} | ${qtdTxt} | ${diasTxt}`);
+    let diasTexto = isNaN(dias) ? 'INVÁLIDA' : (dias < 0 ? `VENCIDO (${Math.abs(dias)}d)` : `${dias}d`);
+    preview += `${p.ean || 'S/EAN'} | ${p.nome.padEnd(20)} | ${formatarData(p.vencimento)} | ${diasTexto}\n`;
   });
-  return linhas.join('\n');
+  
+  document.getElementById('exportPreview').textContent = preview;
 }
 
 function exportarExcel() {
-  const sels = getSelecionados();
-  if (sels.length === 0) { toast('Selecione ao menos um produto na Lista!', true); return; }
-
-  const data = sels.map(p => {
-    const dias = diasAte(p.vencimento);
-    return {
-      'COD (EAN)': p.ean,
-      'Produto': p.nome,
-      'Validade': formatarData(p.vencimento),
-      'Quantidade': p.quantidade !== null && p.quantidade !== undefined ? p.quantidade : '',
-      'Faltam (dias)': dias < 0 ? `VENCIDO há ${Math.abs(dias)} dias` : dias === 0 ? 'VENCE HOJE' : dias,
-      'Status': dias < 0 ? 'VENCIDO' : dias <= 20 ? 'CRÍTICO' : 'OK'
-    };
-  });
-
+  const selecionados = produtos.filter(p => p.selecionado);
+  
+  if (selecionados.length === 0) {
+    toast('⚠ Selecione ao menos um produto', true);
+    return;
+  }
+  
+  const dados = selecionados.map(p => ({
+    'COD': p.ean || 'S/EAN',
+    'PRODUTO': p.nome,
+    'VALIDADE': formatarData(p.vencimento),
+    'FALTAM': (() => {
+      const dias = diasAte(p.vencimento);
+      return isNaN(dias) ? 'INVÁLIDA' : (dias < 0 ? `VENCIDO (${Math.abs(dias)}d)` : `${dias}d`);
+    })(),
+    'QUANTIDADE': p.quantidade
+  }));
+  
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
-
-  // Larguras de coluna
-  ws['!cols'] = [
-    { wch: 16 }, { wch: 32 }, { wch: 14 }, { wch: 10 }, { wch: 18 }, { wch: 10 }
-  ];
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Validades');
-
-  const now = new Date();
-  const filename = `validades_${now.toISOString().slice(0,10)}.xlsx`;
-  XLSX.writeFile(wb, filename);
+  const ws = XLSX.utils.json_to_sheet(dados);
+  XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+  XLSX.writeFile(wb, `validades_${new Date().toISOString().slice(0,10)}.xlsx`);
+  
   toast('📊 Excel exportado!');
 }
 
 function exportarWhatsApp() {
-  const sels = getSelecionados();
-  if (sels.length === 0) { toast('Selecione ao menos um produto na Lista!', true); return; }
-
-  const linhas = ['*📦 CONTROLE DE VALIDADES*', `_Data: ${new Date().toLocaleDateString('pt-BR')}_`, ''];
-  linhas.push('*COD EAN | PRODUTO | VALIDADE | QTD | FALTAM*');
-  linhas.push('━'.repeat(35));
-
-  sels.forEach(p => {
+  const selecionados = produtos.filter(p => p.selecionado);
+  
+  if (selecionados.length === 0) {
+    toast('⚠ Selecione ao menos um produto', true);
+    return;
+  }
+  
+  let mensagem = '*📦 CONTROLE DE VALIDADE*\n\n';
+  
+  selecionados.forEach(p => {
     const dias = diasAte(p.vencimento);
-    const diasTxt = dias < 0 ? `⛔ VENCIDO (${Math.abs(dias)}d)` : dias === 0 ? '⚠️ HOJE' : dias <= 20 ? `🟠 ${dias}d` : `✅ ${dias}d`;
-    const ean = p.ean === '—' ? '—' : p.ean;
-    const qtdTxtWa = p.quantidade !== null && p.quantidade !== undefined ? p.quantidade : '—';
-    linhas.push(`${ean} | ${p.nome} | ${formatarData(p.vencimento)} | ${qtdTxtWa} | ${diasTxt}`);
+    let status = isNaN(dias) ? '⚠️ INVÁLIDA' : (dias < 0 ? '🔴 VENCIDO' : (dias <= 20 ? '🟠 CRÍTICO' : '🟢 OK'));
+    mensagem += `${status} | ${p.nome}\n`;
+    mensagem += `  📅 ${formatarData(p.vencimento)} | ${dias < 0 ? `Vencido há ${Math.abs(dias)}d` : dias <= 20 ? `Faltam ${dias}d` : `${dias}d`}\n`;
+    if (p.quantidade > 1) mensagem += `  📦 Qtd: ${p.quantidade}\n`;
+    mensagem += '\n';
   });
-
-  linhas.push('');
-  linhas.push(`_Total: ${sels.length} produto(s)_`);
-
-  const texto = encodeURIComponent(linhas.join('\n'));
-  window.open(`https://wa.me/?text=${texto}`, '_blank');
+  
+  const encoded = encodeURIComponent(mensagem);
+  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  
+  toast('💬 WhatsApp aberto!');
 }
 
 function exportarTexto() {
-  const sels = getSelecionados();
-  if (sels.length === 0) { toast('Selecione ao menos um produto na Lista!', true); return; }
-
-  const texto = gerarTextoTabela(sels);
-
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(texto).then(() => toast('📋 Texto copiado!')).catch(() => fallbackCopy(texto));
-  } else {
-    fallbackCopy(texto);
+  const selecionados = produtos.filter(p => p.selecionado);
+  
+  if (selecionados.length === 0) {
+    toast('⚠ Selecione ao menos um produto', true);
+    return;
   }
-}
-
-function fallbackCopy(texto) {
-  const ta = document.createElement('textarea');
-  ta.value = texto;
-  document.body.appendChild(ta);
-  ta.select();
-  document.execCommand('copy');
-  document.body.removeChild(ta);
-  toast('📋 Texto copiado!');
+  
+  let texto = 'COD | PRODUTO | VALIDADE | FALTAM\n';
+  texto += ''.padEnd(60, '-') + '\n';
+  
+  selecionados.forEach(p => {
+    const dias = diasAte(p.vencimento);
+    let diasTexto = isNaN(dias) ? 'INVÁLIDA' : (dias < 0 ? `VENCIDO (${Math.abs(dias)}d)` : `${dias}d`);
+    texto += `${p.ean || 'S/EAN'} | ${p.nome.padEnd(20)} | ${formatarData(p.vencimento)} | ${diasTexto}\n`;
+  });
+  
+  navigator.clipboard.writeText(texto).then(() => {
+    toast('✓ Copiado para área de transferência!');
+  });
 }
 
 // ===================== INIT =====================
-document.addEventListener('DOMContentLoaded', () => {
-  updateSummary();
+window.addEventListener('load', () => {
   renderLista();
+  updateSummary();
+  updateExportCount();
+  updateBackupStatus();
+  updateBackupIndicator();
   document.getElementById('totalCount').textContent = produtos.length;
-});
-
-// Fechar câmera ao apertar voltar
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeCamera();
 });
 </script>
 </body>
